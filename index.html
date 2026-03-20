@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ad Maiorem Dei Gloriam — Preghiere Quotidiane</title>
+  <meta name="description" content="Sito di preghiere quotidiane con Vangelo del giorno, rito romano e ambrosiano." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cormorant+Garant:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400;1,600&family=EB+Garamond:ital,wght@0,400;0,500;1,400;1,500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- Decorative grain overlay -->
+  <div class="grain-overlay" aria-hidden="true"></div>
+
+  <!-- Header -->
+  <header class="site-header">
+    <div class="header-ornament" aria-hidden="true">
+      <span class="ornament-line"></span>
+      <svg class="cross-icon" viewBox="0 0 40 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="16" y="0" width="8" height="60" rx="2" fill="currentColor"/>
+        <rect x="0" y="16" width="40" height="8" rx="2" fill="currentColor"/>
+      </svg>
+      <span class="ornament-line"></span>
+    </div>
+    <p class="site-subtitle">Ad Maiorem Dei Gloriam</p>
+    <h1 class="site-title">Preghiere Quotidiane</h1>
+    <p class="site-date" id="site-date"></p>
+    <div class="header-border" aria-hidden="true"></div>
+  </header>
+
+  <main>
+
+    <!-- Gospel Section -->
+    <section class="section gospel-section" id="vangelo">
+      <div class="section-label">
+        <span class="label-ornament" aria-hidden="true">✦</span>
+        Vangelo del Giorno
+        <span class="label-ornament" aria-hidden="true">✦</span>
+      </div>
+
+      <div class="rite-toggle" role="group" aria-label="Selezione del rito liturgico">
+        <button class="rite-btn active" data-rite="romano" aria-pressed="true">
+          <span class="rite-icon">⛪</span>
+          Rito Romano
+        </button>
+        <button class="rite-btn" data-rite="ambrosiano" aria-pressed="false">
+          <span class="rite-icon">✝</span>
+          Rito Ambrosiano
+        </button>
+      </div>
+
+      <div class="gospel-card" id="gospel-card">
+        <div class="gospel-loading" id="gospel-loading">
+          <div class="loading-cross" aria-hidden="true"></div>
+          <p>Caricamento del Vangelo...</p>
+        </div>
+        <div class="gospel-content hidden" id="gospel-content">
+          <p class="gospel-reference" id="gospel-reference"></p>
+          <div class="gospel-text" id="gospel-text"></div>
+          <a class="gospel-source-link" id="gospel-source-link" target="_blank" rel="noopener noreferrer">
+            Leggi la versione completa →
+          </a>
+        </div>
+        <div class="gospel-error hidden" id="gospel-error">
+          <p class="error-title">Impossibile caricare il Vangelo</p>
+          <p class="error-body">Controlla la connessione o visita direttamente:</p>
+          <div class="error-links" id="error-links">
+            <a href="https://www.vaticannews.va/it/vangelo-del-giorno-e-parola-del-giorno.html" target="_blank" rel="noopener noreferrer">Vatican News — Vangelo del Giorno →</a>
+          </div>
+          <button class="retry-btn" id="retry-btn">Riprova</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Divider -->
+    <div class="section-divider" aria-hidden="true">
+      <span></span><span class="diamond">◆</span><span></span>
+    </div>
+
+    <!-- Prayers Section -->
+    <section class="section prayers-section" id="preghiere">
+      <div class="section-label">
+        <span class="label-ornament" aria-hidden="true">✦</span>
+        Le Mie Preghiere
+        <span class="label-ornament" aria-hidden="true">✦</span>
+      </div>
+
+      <div class="prayers-grid">
+
+        <!-- Prayer 1: Morning -->
+        <button class="prayer-card" data-prayer="mattino" aria-expanded="false">
+          <div class="prayer-card-header">
+            <div class="prayer-icon" aria-hidden="true">☀</div>
+            <div class="prayer-meta">
+              <span class="prayer-tag">Preghiera del Mattino</span>
+              <h3 class="prayer-title">Guidami, Signore</h3>
+            </div>
+            <div class="prayer-chevron" aria-hidden="true">▾</div>
+          </div>
+          <div class="prayer-body hidden" id="body-mattino">
+            <p>Signore, guidami in questo nuovo giorno, perché io possa riconoscere e abbracciare ciò che è bene e sconfiggere ciò che è male e le tentazioni che incontrerò.</p>
+            <p>Aiutami a far sì che tutto il mio lavoro e lo studio siano efficaci strumenti per Te, e manda lo Spirito Santo su di me per consigliarmi e guidarmi in ogni cosa.</p>
+            <p>Per intercessione di Carlo Acutis, non dimenticarti di questo tuo servo.</p>
+            <p class="prayer-amen">Amen.</p>
+          </div>
+        </button>
+
+        <!-- Prayer 2: Temptation -->
+        <button class="prayer-card" data-prayer="tentazione" aria-expanded="false">
+          <div class="prayer-card-header">
+            <div class="prayer-icon" aria-hidden="true">⚔</div>
+            <div class="prayer-meta">
+              <span class="prayer-tag">Nella Tentazione</span>
+              <h3 class="prayer-title">Coraggio e Forza</h3>
+            </div>
+            <div class="prayer-chevron" aria-hidden="true">▾</div>
+          </div>
+          <div class="prayer-body hidden" id="body-tentazione">
+            <p>Signore Gesù, donami coraggio e forza in questo momento di tentazione. Aiutami a riconoscere ciò che è veramente bene e a non distrarmi né cedere a compromessi ingannevoli.</p>
+            <p>Fa' che sia in questi attimi, quando tutto sembra vacillare, che la mia fede si riveli e cresca.</p>
+            <p>Maria, Madre potente, intercedi per me e proteggimi dal peccato.</p>
+            <p class="prayer-amen">Amen.</p>
+          </div>
+        </button>
+
+        <!-- Prayer 3: After a fall -->
+        <button class="prayer-card" data-prayer="caduta" aria-expanded="false">
+          <div class="prayer-card-header">
+            <div class="prayer-icon" aria-hidden="true">🕊</div>
+            <div class="prayer-meta">
+              <span class="prayer-tag">Dopo la Caduta</span>
+              <h3 class="prayer-title">Rialzami, Signore</h3>
+            </div>
+            <div class="prayer-chevron" aria-hidden="true">▾</div>
+          </div>
+          <div class="prayer-body hidden" id="body-caduta">
+            <p>Signore, tu hai visto la mia lotta e sai che non volevo cadere, eppure sono caduto. Il mio cuore è confuso e mi sento debole, ma non voglio allontanarmi da Te proprio adesso.</p>
+            <p>Perdonami, Signore. Rialzami ancora una volta. Non lasciare che la mia caduta diventi disperazione o che il nemico mi convinca che ormai è tutto perduto.</p>
+            <p>Tu conosci la mia fragilità meglio di me: insegnami a ricominciare con più umiltà, con più vigilanza e con più fiducia nella Tua grazia.</p>
+            <p>Rimettimi in piedi, Signore, e guidami di nuovo sulla Tua strada.</p>
+            <p class="prayer-amen">Amen.</p>
+          </div>
+        </button>
+
+        <!-- Prayer 4: Before a task -->
+        <button class="prayer-card" data-prayer="inizio" aria-expanded="false">
+          <div class="prayer-card-header">
+            <div class="prayer-icon" aria-hidden="true">✏</div>
+            <div class="prayer-meta">
+              <span class="prayer-tag">Prima di un Impegno</span>
+              <h3 class="prayer-title">Tutto a Te</h3>
+            </div>
+            <div class="prayer-chevron" aria-hidden="true">▾</div>
+          </div>
+          <div class="prayer-body hidden" id="body-inizio">
+            <p>Gesù, mentre inizio ciò che mi accingi a farmi vivere, ti affido tutto me stesso. Guidami affinché tutto ciò che faccio possa servirTi davvero.</p>
+            <p>Illumina i miei pensieri e guidami nelle scelte, fa' che ogni mio sforzo diventi strumento per Te.</p>
+            <p class="prayer-amen">Amen.</p>
+          </div>
+        </button>
+
+        <!-- Prayer 5: Marian -->
+        <button class="prayer-card prayer-card--wide" data-prayer="maria" aria-expanded="false">
+          <div class="prayer-card-header">
+            <div class="prayer-icon" aria-hidden="true">🌹</div>
+            <div class="prayer-meta">
+              <span class="prayer-tag">Preghiera Mariana</span>
+              <h3 class="prayer-title">Santa Maria, Madre di Dio</h3>
+            </div>
+            <div class="prayer-chevron" aria-hidden="true">▾</div>
+          </div>
+          <div class="prayer-body hidden" id="body-maria">
+            <p>Santa Maria, Madre di Dio, tu che mai trascuri chi ti chiama, rendimi saldo nella fede e pronto al servizio di Dio. Fa' che la mia vita sia uno strumento nelle mani di Dio.</p>
+            <p>In questo momento affido a te i miei pensieri e desideri. Guida i miei passi, rafforza la mia volontà, e rendimi capace di compiere il bene che vuoi.</p>
+            <p>Mantienimi saldo nelle prove, fai brillare la tua luce dove c'è oscurità, e insegnami a camminare con coraggio sulla via della fede.</p>
+            <p class="prayer-amen">Amen.</p>
+          </div>
+        </button>
+
+      </div>
+    </section>
+
+    <!-- Divider -->
+    <div class="section-divider" aria-hidden="true">
+      <span></span><span class="diamond">◆</span><span></span>
+    </div>
+
+    <!-- Intentions Section -->
+    <section class="section intentions-section" id="intenzioni">
+      <div class="section-label">
+        <span class="label-ornament" aria-hidden="true">✦</span>
+        Le Mie Intenzioni
+        <span class="label-ornament" aria-hidden="true">✦</span>
+      </div>
+
+      <div class="intentions-card">
+        <p class="intentions-intro">Affida al Signore le intenzioni del tuo cuore. Questi pensieri restano privati nel tuo dispositivo.</p>
+        <textarea
+          id="intentions-text"
+          class="intentions-textarea"
+          placeholder="Scrivi qui le tue intenzioni di preghiera…"
+          aria-label="Le tue intenzioni di preghiera"
+        ></textarea>
+        <div class="intentions-actions">
+          <button class="save-btn" id="save-intentions">
+            <span class="btn-icon" aria-hidden="true">✓</span>
+            Salva
+          </button>
+          <span class="save-status" id="save-status" aria-live="polite"></span>
+          <button class="clear-btn" id="clear-intentions">Cancella tutto</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-ornament" aria-hidden="true">◆ ◇ ◆</div>
+    <p class="footer-text">
+      «Chiedete e vi sarà dato; cercate e troverete; bussate e vi sarà aperto.»<br />
+      <em>Mt 7,7</em>
+    </p>
+    <p class="footer-copy">Fatto con ❤ per la gloria di Dio</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

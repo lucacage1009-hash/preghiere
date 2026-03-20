@@ -1,0 +1,737 @@
+/* ========================================
+   AD MAIOREM DEI GLORIAM
+   Sacred Illuminated Manuscript aesthetic
+   ======================================== */
+
+/* ---------- CSS Variables ---------- */
+:root {
+  --cream:         #F6F0E4;
+  --cream-dark:    #EDE6D4;
+  --parchment:     #E8DEC8;
+  --brown-deep:    #2A1A0E;
+  --brown-mid:     #4A3020;
+  --brown-light:   #7A5C3A;
+  --gold:          #B8912A;
+  --gold-light:    #D4AC50;
+  --gold-dim:      #8A6A18;
+  --burgundy:      #7A2535;
+  --burgundy-deep: #5A1A25;
+  --green-deep:    #1E3A2A;
+  --green-mid:     #2D5040;
+  --accent-blue:   #2A3A5A;
+
+  --font-display:  'Cinzel Decorative', serif;
+  --font-heading:  'Cormorant Garant', serif;
+  --font-body:     'EB Garamond', serif;
+
+  --radius:        12px;
+  --radius-lg:     20px;
+  --shadow-sm:     0 2px 8px rgba(42, 26, 14, 0.12);
+  --shadow-md:     0 6px 24px rgba(42, 26, 14, 0.18);
+  --shadow-lg:     0 12px 40px rgba(42, 26, 14, 0.24);
+
+  --transition:    0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ---------- Reset & Base ---------- */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  font-size: 16px;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--cream);
+  color: var(--brown-deep);
+  line-height: 1.75;
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* ---------- Grain Overlay ---------- */
+.grain-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+  opacity: 0.5;
+}
+
+/* Background radial glow */
+body::before {
+  content: '';
+  position: fixed;
+  top: -20vh;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120vw;
+  height: 80vh;
+  background: radial-gradient(ellipse, rgba(184, 145, 42, 0.08) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+main, header, footer {
+  position: relative;
+  z-index: 1;
+}
+
+/* ---------- Header ---------- */
+.site-header {
+  text-align: center;
+  padding: 4rem 2rem 3rem;
+  background: linear-gradient(
+    to bottom,
+    rgba(30, 58, 42, 0.07) 0%,
+    transparent 100%
+  );
+  border-bottom: 1px solid rgba(184, 145, 42, 0.25);
+}
+
+.header-ornament {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.ornament-line {
+  width: 80px;
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--gold), transparent);
+  display: block;
+}
+
+.cross-icon {
+  width: 24px;
+  height: 36px;
+  color: var(--gold);
+  filter: drop-shadow(0 0 8px rgba(184, 145, 42, 0.5));
+}
+
+.site-subtitle {
+  font-family: var(--font-heading);
+  font-style: italic;
+  font-size: 0.95rem;
+  color: var(--gold);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+}
+
+.site-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.8rem, 5vw, 3.2rem);
+  font-weight: 700;
+  color: var(--brown-deep);
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  margin-bottom: 0.75rem;
+  text-shadow: 0 1px 2px rgba(255,255,255,0.6);
+}
+
+.site-date {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  color: var(--brown-light);
+  letter-spacing: 0.12em;
+  font-style: italic;
+}
+
+.header-border {
+  width: 180px;
+  height: 3px;
+  background: linear-gradient(to right, transparent, var(--gold), transparent);
+  margin: 2rem auto 0;
+  border-radius: 2px;
+}
+
+/* ---------- Main Layout ---------- */
+main {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+}
+
+/* ---------- Section ---------- */
+.section {
+  margin-bottom: 4rem;
+  animation: fadeUp 0.7s ease both;
+}
+
+.section:nth-child(1) { animation-delay: 0.1s; }
+.section:nth-child(3) { animation-delay: 0.2s; }
+.section:nth-child(5) { animation-delay: 0.3s; }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.section-label {
+  font-family: var(--font-heading);
+  font-size: 0.82rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--gold-dim);
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.label-ornament {
+  font-size: 0.6rem;
+  color: var(--gold);
+}
+
+/* ---------- Divider ---------- */
+.section-divider {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 2rem 0 3.5rem;
+}
+
+.section-divider span:first-child,
+.section-divider span:last-child {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(184, 145, 42, 0.3), transparent);
+}
+
+.diamond {
+  font-size: 0.7rem;
+  color: var(--gold);
+  flex: 0;
+}
+
+/* ---------- Rite Toggle ---------- */
+.rite-toggle {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-bottom: 1.75rem;
+}
+
+.rite-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.5rem;
+  border-radius: 50px;
+  border: 1.5px solid rgba(184, 145, 42, 0.35);
+  background: rgba(255, 255, 255, 0.4);
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  color: var(--brown-light);
+  cursor: pointer;
+  transition: var(--transition);
+  letter-spacing: 0.03em;
+}
+
+.rite-btn:hover {
+  border-color: var(--gold);
+  color: var(--brown-mid);
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.rite-btn.active {
+  background: linear-gradient(135deg, var(--green-deep), var(--green-mid));
+  border-color: var(--gold);
+  color: var(--cream);
+  box-shadow: 0 4px 14px rgba(30, 58, 42, 0.35);
+}
+
+.rite-btn.active .rite-icon { filter: drop-shadow(0 0 4px rgba(212, 172, 80, 0.6)); }
+
+/* ---------- Gospel Card ---------- */
+.gospel-card {
+  background: linear-gradient(145deg, #FFFCF5, var(--cream-dark));
+  border: 1px solid rgba(184, 145, 42, 0.22);
+  border-radius: var(--radius-lg);
+  padding: 2.5rem;
+  box-shadow: var(--shadow-md);
+  position: relative;
+  overflow: hidden;
+  min-height: 200px;
+  display: flex;
+  align-items: flex-start;
+}
+
+.gospel-card::before {
+  content: '✦';
+  position: absolute;
+  top: -1rem;
+  right: 2rem;
+  font-size: 4rem;
+  color: rgba(184, 145, 42, 0.07);
+  pointer-events: none;
+  line-height: 1;
+}
+
+/* Gospel Loading */
+.gospel-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  width: 100%;
+  padding: 2rem;
+  text-align: center;
+  color: var(--brown-light);
+  font-family: var(--font-heading);
+  font-style: italic;
+}
+
+.loading-cross {
+  width: 28px;
+  height: 28px;
+  border: 2px solid rgba(184, 145, 42, 0.4);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Gospel Content */
+.gospel-content {
+  width: 100%;
+  animation: fadeIn 0.5s ease;
+}
+
+.gospel-reference {
+  font-family: var(--font-heading);
+  font-size: 0.85rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 1.25rem;
+}
+
+.gospel-text {
+  font-family: var(--font-body);
+  font-size: 1.12rem;
+  line-height: 1.85;
+  color: var(--brown-deep);
+  white-space: pre-wrap;
+}
+
+.gospel-text p {
+  margin-bottom: 0.9em;
+}
+
+.gospel-source-link {
+  display: inline-block;
+  margin-top: 1.5rem;
+  font-family: var(--font-heading);
+  font-size: 0.88rem;
+  color: var(--gold-dim);
+  text-decoration: none;
+  letter-spacing: 0.06em;
+  border-bottom: 1px solid rgba(184, 145, 42, 0.3);
+  padding-bottom: 1px;
+  transition: color 0.2s;
+}
+.gospel-source-link:hover { color: var(--gold); border-color: var(--gold); }
+
+/* Gospel Error */
+.gospel-error {
+  width: 100%;
+  text-align: center;
+  padding: 1.5rem;
+}
+
+.error-title {
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+  color: var(--burgundy);
+  margin-bottom: 0.5rem;
+}
+
+.error-body {
+  font-size: 0.95rem;
+  color: var(--brown-light);
+  margin-bottom: 1rem;
+}
+
+.error-links a {
+  display: block;
+  font-family: var(--font-heading);
+  font-size: 0.92rem;
+  color: var(--gold-dim);
+  text-decoration: none;
+  margin-bottom: 0.4rem;
+  transition: color 0.2s;
+}
+.error-links a:hover { color: var(--gold); }
+
+.retry-btn {
+  margin-top: 1rem;
+  padding: 0.5rem 1.5rem;
+  border: 1px solid var(--gold-dim);
+  border-radius: 50px;
+  background: transparent;
+  font-family: var(--font-heading);
+  color: var(--gold-dim);
+  cursor: pointer;
+  transition: var(--transition);
+}
+.retry-btn:hover {
+  background: var(--gold-dim);
+  color: var(--cream);
+}
+
+/* ---------- Utility ---------- */
+.hidden { display: none !important; }
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ---------- Prayers Grid ---------- */
+.prayers-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+/* ---------- Prayer Card ---------- */
+.prayer-card {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: linear-gradient(145deg, #FFFCF5, var(--cream-dark));
+  border: 1px solid rgba(184, 145, 42, 0.2);
+  border-radius: var(--radius);
+  padding: 0;
+  cursor: pointer;
+  transition: var(--transition);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  position: relative;
+}
+
+.prayer-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius);
+  opacity: 0;
+  background: linear-gradient(135deg, rgba(30,58,42,0.04), rgba(184,145,42,0.04));
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+
+.prayer-card:hover {
+  border-color: rgba(184, 145, 42, 0.45);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.prayer-card:hover::after { opacity: 1; }
+
+.prayer-card[aria-expanded="true"] {
+  border-color: var(--gold);
+  box-shadow: var(--shadow-lg), 0 0 0 2px rgba(184,145,42,0.12);
+}
+
+.prayer-card--wide {
+  grid-column: 1 / -1;
+}
+
+.prayer-card-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
+}
+
+.prayer-icon {
+  font-size: 1.6rem;
+  line-height: 1;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  background: linear-gradient(135deg, rgba(30,58,42,0.08), rgba(184,145,42,0.12));
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.prayer-meta {
+  flex: 1;
+}
+
+.prayer-tag {
+  display: block;
+  font-family: var(--font-heading);
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--gold-dim);
+  margin-bottom: 0.2rem;
+}
+
+.prayer-title {
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--brown-deep);
+  line-height: 1.25;
+}
+
+.prayer-chevron {
+  font-size: 1.2rem;
+  color: var(--gold);
+  transition: transform 0.3s ease;
+  flex-shrink: 0;
+}
+
+.prayer-card[aria-expanded="true"] .prayer-chevron {
+  transform: rotate(180deg);
+}
+
+/* Prayer Body */
+.prayer-body {
+  padding: 0 1.5rem 1.5rem;
+  border-top: 1px solid rgba(184, 145, 42, 0.15);
+  margin-top: 0;
+  animation: expandDown 0.35s ease;
+  overflow: hidden;
+}
+
+@keyframes expandDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.prayer-body p {
+  font-family: var(--font-body);
+  font-size: 1.05rem;
+  line-height: 1.8;
+  color: var(--brown-mid);
+  margin-top: 1rem;
+}
+
+.prayer-body p:first-child {
+  margin-top: 1.25rem;
+}
+
+.prayer-amen {
+  font-family: var(--font-heading) !important;
+  font-style: italic;
+  font-size: 1.1rem !important;
+  color: var(--gold-dim) !important;
+  text-align: right;
+  margin-top: 1.25rem !important;
+  font-weight: 600;
+}
+
+/* ---------- Intentions Section ---------- */
+.intentions-card {
+  background: linear-gradient(145deg, #FFFCF5, var(--cream-dark));
+  border: 1px solid rgba(184, 145, 42, 0.22);
+  border-radius: var(--radius-lg);
+  padding: 2.5rem;
+  box-shadow: var(--shadow-md);
+}
+
+.intentions-intro {
+  font-family: var(--font-heading);
+  font-style: italic;
+  font-size: 1rem;
+  color: var(--brown-light);
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.intentions-textarea {
+  width: 100%;
+  min-height: 160px;
+  border: 1.5px solid rgba(184, 145, 42, 0.25);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.55);
+  padding: 1rem 1.25rem;
+  font-family: var(--font-body);
+  font-size: 1.05rem;
+  color: var(--brown-deep);
+  line-height: 1.75;
+  resize: vertical;
+  transition: border-color 0.25s, box-shadow 0.25s;
+  outline: none;
+}
+
+.intentions-textarea::placeholder {
+  color: var(--brown-light);
+  opacity: 0.6;
+  font-style: italic;
+}
+
+.intentions-textarea:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(184, 145, 42, 0.12);
+}
+
+.intentions-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+
+.save-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.65rem 1.75rem;
+  background: linear-gradient(135deg, var(--green-deep), var(--green-mid));
+  border: 1px solid rgba(184, 145, 42, 0.3);
+  border-radius: 50px;
+  color: var(--cream);
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: var(--transition);
+  letter-spacing: 0.06em;
+}
+
+.save-btn:hover {
+  background: linear-gradient(135deg, #2a4a38, #3a6050);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.btn-icon {
+  font-weight: bold;
+}
+
+.save-status {
+  font-family: var(--font-heading);
+  font-style: italic;
+  font-size: 0.9rem;
+  color: var(--gold-dim);
+  flex: 1;
+}
+
+.clear-btn {
+  margin-left: auto;
+  background: transparent;
+  border: 1px solid rgba(122, 37, 53, 0.3);
+  border-radius: 50px;
+  padding: 0.55rem 1.25rem;
+  color: var(--burgundy);
+  font-family: var(--font-heading);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: var(--transition);
+  opacity: 0.75;
+}
+
+.clear-btn:hover {
+  background: rgba(122, 37, 53, 0.08);
+  opacity: 1;
+}
+
+/* ---------- Footer ---------- */
+.site-footer {
+  text-align: center;
+  padding: 3rem 2rem;
+  border-top: 1px solid rgba(184, 145, 42, 0.2);
+  background: linear-gradient(to top, rgba(30, 58, 42, 0.04), transparent);
+  position: relative;
+  z-index: 1;
+}
+
+.footer-ornament {
+  font-size: 0.7rem;
+  color: var(--gold);
+  letter-spacing: 0.4em;
+  margin-bottom: 1.25rem;
+}
+
+.footer-text {
+  font-family: var(--font-heading);
+  font-size: 1.05rem;
+  color: var(--brown-mid);
+  line-height: 1.8;
+  margin-bottom: 1.25rem;
+}
+
+.footer-text em {
+  color: var(--gold-dim);
+  font-size: 0.9rem;
+}
+
+.footer-copy {
+  font-family: var(--font-heading);
+  font-size: 0.82rem;
+  color: var(--brown-light);
+  letter-spacing: 0.08em;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 640px) {
+  .site-header { padding: 3rem 1.25rem 2rem; }
+
+  .prayers-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .prayer-card--wide {
+    grid-column: auto;
+  }
+
+  .gospel-card,
+  .intentions-card {
+    padding: 1.75rem 1.25rem;
+  }
+
+  .rite-toggle { flex-direction: column; align-items: center; }
+  .rite-btn { width: 100%; max-width: 280px; justify-content: center; }
+
+  .intentions-actions { flex-direction: column; align-items: flex-start; }
+  .clear-btn { margin-left: 0; }
+}
+
+@media (max-width: 380px) {
+  .site-title { font-size: 1.5rem; }
+}
+
+/* ---------- Smooth scroll target highlight ---------- */
+:target {
+  scroll-margin-top: 2rem;
+}
+
+/* ---------- Accessibility ---------- */
+:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
