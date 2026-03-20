@@ -1,23 +1,22 @@
 #!/usr/bin/env node
 'use strict';
 /*
-  fetch-gospels.js
-  Scarica vangeli Romano (Evangelizo API) + Ambrosiano (vangelodelgiorno.org)
-  per una finestra mobile di N giorni.
-  
-  Uso: node fetch-gospels.js [giorni]    default 30
-       node fetch-gospels.js 60          prossimi 60 giorni
+  fetch-gospels.js — scarica vangeli romano + ambrosiano
+  Romano: Evangelizo API (affidabile, ufficiale)
+  Ambrosiano: prova 4 sorgenti diverse, seleziona la prima che funziona
+
+  Uso: node fetch-gospels.js [giorni]   default=30
 */
 const https = require('https');
 const http  = require('http');
 const fs    = require('fs');
 const path  = require('path');
+const {URL} = require('url');
 
 const OUTPUT = path.join(__dirname,'gospels.json');
 const EVA    = 'https://feed.evangelizo.org/v2/reader.php';
 const DAYS   = parseInt(process.argv[2])||30;
-const DELAY  = 400;
-const SAVE_N = 5;
+const DELAY  = 500;
 const sleep  = ms => new Promise(r=>setTimeout(r,ms));
 
 function isoDate(d){return d.toISOString().slice(0,10);}
@@ -25,39 +24,57 @@ function evaDate(d){
   return d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');
 }
 
-function httpGet(url,hops=6){
+/* ── HTTP helper with redirect + timeout ── */
+function httpGet(rawUrl, hops=8){
   return new Promise((resolve,reject)=>{
-    const lib=url.startsWith('https')?https:http;
-    const req=lib.get(url,{
-      timeout:30000,
-      headers:{'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36','Accept-Language':'it-IT,it;q=0.9,en;q=0.5','Accept':'text/html,*/*'}
-    },res=>{
-      if([301,302,303,307,308].includes(res.statusCode)&&res.headers.location&&hops>0)
-        return resolve(httpGet(res.headers.location,hops-1));
+    let parsedUrl;
+    try { parsedUrl=new URL(rawUrl); } catch(e){ return reject(e); }
+    const lib = parsedUrl.protocol==='https:'?https:http;
+    const opts = {
+      hostname: parsedUrl.hostname,
+      port:     parsedUrl.port||undefined,
+      path:     parsedUrl.pathname+parsedUrl.search,
+      timeout:  25000,
+      headers:{
+        'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0 Safari/537.36',
+        'Accept':'text/html,application/xhtml+xml,*/*;q=0.9',
+        'Accept-Language':'it-IT,it;q=0.9,en;q=0.5',
+        'Accept-Encoding':'identity',
+        'Cache-Control':'no-cache',
+      }
+    };
+    const req=lib.get(opts, res=>{
+      if([301,302,303,307,308].includes(res.statusCode)&&res.headers.location&&hops>0){
+        let loc=res.headers.location;
+        if(!loc.startsWith('http')) loc=parsedUrl.origin+loc;
+        res.resume(); return resolve(httpGet(loc,hops-1));
+      }
       let d=''; res.setEncoding('utf8');
-      res.on('data',c=>d+=c); res.on('end',()=>resolve(d));
+      res.on('data',c=>d+=c);
+      res.on('end',()=>resolve(d));
     });
     req.on('error',reject);
-    req.on('timeout',()=>{req.destroy();reject(new Error('timeout'));});
+    req.on('timeout',()=>{req.destroy();reject(new Error('timeout: '+rawUrl));});
   });
 }
 
+/* ── Text cleaner ── */
 function clean(raw){
   return (raw||'')
     .replace(/<br\s*\/?>/gi,'\n').replace(/<[^>]+>/g,'')
     .replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>')
-    .replace(/&nbsp;/g,' ').replace(/&#(\d+);/g,(_,n)=>String.fromCharCode(n))
-    .replace(/&apos;/g,"'").replace(/&quot;/g,'"')
+    .replace(/&nbsp;/g,' ').replace(/&apos;/g,"'").replace(/&quot;/g,'"')
+    .replace(/&#(\d+);/g,(_,n)=>String.fromCharCode(n))
     .replace(/Copyright[^\n]*/gi,'').replace(/Per ricevere il Vangelo[^\n]*/gi,'')
     .replace(/vangelodelgiorno\.org[^\n]*/gi,'').replace(/evangelizo\.org[^\n]*/gi,'')
     .split('\n').map(l=>l.trim()).filter(l=>l.length>0).join('\n');
 }
 
+/* ── Evangelizo API (romano) ── */
 async function evaGet(params){
   const url=`${EVA}?${new URLSearchParams(params)}`;
   return clean(await httpGet(url));
 }
-
 async function fetchRomano(ds){
   const base={date:ds,lang:'IT'};
   const [ref,text,ct,ca,cb]=await Promise.all([
@@ -70,127 +87,150 @@ async function fetchRomano(ds){
   return {reference:ref,text,commentTitle:ct,commentAuthor:ca,commentText:cb};
 }
 
-/* Ambrosiano: vangelodelgiorno.org/ambrosiano/ 
-   The site has a WordPress structure with daily posts.
-   We try date-specific URLs first, then the homepage. */
-async function fetchAmbrosiano(d){
-  const y=d.getFullYear();
-  const m=String(d.getMonth()+1).padStart(2,'0');
-  const dd=String(d.getDate()).padStart(2,'0');
+/* ── Extract gospel text from HTML ── */
+function extractGospel(html){
+  if(!html||html.length<200) return null;
 
-  /* vangelodelgiorno uses WordPress date permalinks */
-  const urlsToTry=[
-    `https://vangelodelgiorno.org/ambrosiano/${y}/${m}/${dd}/`,
-    `https://vangelodelgiorno.org/${y}/${m}/${dd}/ambrosiano/`,
-    `https://vangelodelgiorno.org/ambrosiano/`,
+  /* Find reference */
+  let ref='';
+  const refPatterns=[
+    /Dal\s+Vangelo\s+di\s+Ges[^\n<"]{5,100}/i,
+    /Dal\s+Vangelo\s+secondo\s+[^\n<"]{5,80}/i,
+    /Vangelo\s+secondo\s+[^\n<"]{5,80}/i,
+  ];
+  for(const p of refPatterns){const m=html.match(p);if(m){ref=clean(m[0]).slice(0,140);break;}}
+
+  /* Try content containers in order */
+  const containers=[
+    /<div[^>]+class="[^"]*entry-content[^"]*"[^>]*>([\s\S]{200,12000}?)<\/div>/i,
+    /<div[^>]+class="[^"]*td-post-content[^"]*"[^>]*>([\s\S]{200,12000}?)<\/div>/i,
+    /<div[^>]+class="[^"]*post-content[^"]*"[^>]*>([\s\S]{200,12000}?)<\/div>/i,
+    /<div[^>]+class="[^"]*single[^"]*[^"]*"[^>]*>([\s\S]{200,12000}?)<\/div>/i,
+    /<div[^>]+class="[^"]*content[^"]*"[^>]*>([\s\S]{300,15000}?)<\/div>/i,
+    /<article[^>]*>([\s\S]{300,20000}?)<\/article>/i,
+    /<main[^>]*>([\s\S]{300,20000}?)<\/main>/i,
   ];
 
-  for (const url of urlsToTry){
-    try{
-      const html=await httpGet(url);
-      if(!html||html.length<500) continue;
+  const skipLine = /^(menu|nav|abbonati|newsletter|seguici|contatti|cerca|home|categoria|tag|share|commenta|login|registr|cookie|privacy|facebook|twitter|instagram|youtube|\d{1,2}\/\d{1,2}|\d{4}$)/i;
 
-      /* Find reference: "Dal Vangelo di..." */
-      let ref='';
-      const rm=html.match(/Dal\s+Vangelo\s+di\s+Ges[^\n<"]{5,80}/i)
-             ||html.match(/Dal\s+Vangelo\s+secondo\s+[^\n<"]{5,60}/i);
-      if(rm) ref=clean(rm[0]).slice(0,120);
-
-      /* Try multiple WordPress content containers */
-      const containers=[
-        html.match(/<div[^>]+class="[^"]*entry-content[^"]*"[^>]*>([\s\S]{300,10000}?)<\/(div|article)>/i),
-        html.match(/<div[^>]+class="[^"]*td-post-content[^"]*"[^>]*>([\s\S]{300,10000}?)<\/div>/i),
-        html.match(/<div[^>]+class="[^"]*post-content[^"]*"[^>]*>([\s\S]{300,10000}?)<\/div>/i),
-        html.match(/<div[^>]+class="[^"]*single[^"]*content[^"]*"[^>]*>([\s\S]{300,10000}?)<\/div>/i),
-        html.match(/<article[^>]*>([\s\S]{400,15000}?)<\/article>/i),
-      ];
-
-      for(const cm of containers){
-        if(!cm) continue;
-        /* Filter lines: keep gospel-like text, skip navigation/ads */
-        const lines=clean(cm[1]).split('\n')
-          .filter(l=>
-            l.length>25 &&
-            !/^(menu|nav|footer|header|cookie|privacy|abbonati|newsletter|seguici|contatti|cerca|home|categor)/i.test(l) &&
-            !/^\d+$/.test(l.trim())
-          )
-          .slice(0,35);
-        if(lines.length>=3&&lines.join(' ').length>200){
-          return {reference:ref||'Vangelo del Giorno — Rito Ambrosiano',text:lines.join('\n')};
-        }
-      }
-    } catch(e){
-      /* silently try next URL */
+  for(const re of containers){
+    const m=html.match(re);
+    if(!m) continue;
+    const lines=clean(m[1]).split('\n')
+      .filter(l=>l.length>30&&!skipLine.test(l.trim()))
+      .slice(0,40);
+    if(lines.length>=3&&lines.join(' ').length>200){
+      return {reference:ref||'Vangelo — Rito Ambrosiano',text:lines.join('\n')};
     }
-    await sleep(200);
   }
-  return null; /* signal: use romano as fallback */
+  return null;
 }
 
+/* ── Ambrosiano source 1: vangelodelgiorno.org ── */
+async function tryVdg(d){
+  const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');
+  const urls=[
+    `https://vangelodelgiorno.org/ambrosiano/${y}/${m}/${dd}/`,
+    `https://vangelodelgiorno.org/ambrosiano/`,
+  ];
+  for(const url of urls){
+    try{
+      const html=await httpGet(url);
+      const result=extractGospel(html);
+      if(result&&result.text.length>100) return result;
+    }catch(e){}
+    await sleep(200);
+  }
+  return null;
+}
+
+/* ── Ambrosiano source 2: laparola.it ── */
+async function tryLaParola(){
+  try{
+    const html=await httpGet('https://www.laparola.it/ambrosiano/liturgia-della-parola/');
+    const result=extractGospel(html);
+    if(result&&result.text.length>100) return result;
+  }catch(e){}
+  return null;
+}
+
+/* ── Ambrosiano source 3: missaleambrosianum.it ── */
+async function tryMissale(d){
+  try{
+    const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');
+    const html=await httpGet(`https://www.missaleambrosianum.it/liturgia/${y}/${m}/${dd}`);
+    const result=extractGospel(html);
+    if(result&&result.text.length>100) return result;
+  }catch(e){}
+  return null;
+}
+
+/* ── Ambrosiano source 4: diocesimilano.it ── */
+async function tryDiocesi(){
+  try{
+    const html=await httpGet('https://www.diocesimilano.it/chiesa-e-comunita/liturgia/');
+    const result=extractGospel(html);
+    if(result&&result.text.length>100) return result;
+  }catch(e){}
+  return null;
+}
+
+async function fetchAmbrosiano(d){
+  /* Try all sources, return first hit */
+  const result = await tryVdg(d)
+              || await tryLaParola()
+              || await tryMissale(d)
+              || await tryDiocesi();
+  return result;
+}
+
+/* ── Main ── */
 async function main(){
   let gospels={};
   if(fs.existsSync(OUTPUT)){try{gospels=JSON.parse(fs.readFileSync(OUTPUT,'utf8'));}catch(_){}}
 
-  /* Build date range: yesterday → DAYS ahead */
   const dates=[];
-  for(let i=-1;i<=DAYS;i++){
-    const d=new Date(); d.setDate(d.getDate()+i); dates.push(new Date(d));
-  }
+  for(let i=-1;i<=DAYS;i++){const d=new Date();d.setDate(d.getDate()+i);dates.push(new Date(d));}
 
   let dl=0,sk=0,err=0,ambReal=0;
-  console.log(`\n✝  Gospel Fetcher — ${DAYS} giorni`);
-  console.log(`   ${isoDate(dates[0])} → ${isoDate(dates[dates.length-1])}\n`);
+  console.log(`\n  Gospel Fetcher | ${DAYS} giorni | ${isoDate(dates[0])} -> ${isoDate(dates[dates.length-1])}\n`);
 
   for(let i=0;i<dates.length;i++){
-    const d  =dates[i];
-    const iso=isoDate(d);
-    const ds =evaDate(d);
+    const d=dates[i], iso=isoDate(d), ds=evaDate(d);
+    const ex=gospels[iso];
+    const romanOk=ex?.romano?.text?.length>20;
+    const ambOk=ex?.ambrosiano?.text?.length>20&&!ex.ambrosiano.reference?.includes('rito romano');
 
-    const ex      =gospels[iso];
-    const romanOk =ex?.romano?.text?.length>20;
-    /* Consider ambrosiano ok only if it has DISTINCT text from romano */
-    const ambDistinct=ex?.ambrosiano?.text&&
-                      !ex.ambrosiano.reference?.includes('rito romano')&&
-                      ex.ambrosiano.text!==ex?.romano?.text;
+    if(romanOk&&ambOk){sk++;process.stdout.write(`\r  [${i+1}/${dates.length}] skip ${iso}`);continue;}
 
-    if(romanOk&&ambDistinct){
-      sk++;
-      process.stdout.write(`\r   [${i+1}/${dates.length}] ⏩  ${iso}`);
-      continue;
-    }
-
-    process.stdout.write(`\r   [${i+1}/${dates.length}] ⬇  ${iso}...          `);
+    process.stdout.write(`\r  [${i+1}/${dates.length}] fetch ${iso}...          `);
 
     try{
-      /* Romano */
-      let romano=romanOk?ex.romano:await fetchRomano(ds);
+      const romano=romanOk?ex.romano:await fetchRomano(ds);
       if(!romano.text||romano.text.length<20) throw new Error('romano empty');
       if(!romanOk) await sleep(DELAY);
 
-      /* Ambrosiano */
-      let ambrosiano=null;
-      if(!ambDistinct){
+      let amb=ambOk?ex.ambrosiano:null;
+      if(!ambOk){
         try{
-          ambrosiano=await fetchAmbrosiano(d);
-          if(ambrosiano){ambReal++;process.stdout.write(' [amb✓]');}
-          await sleep(DELAY/2);
+          amb=await fetchAmbrosiano(d);
+          if(amb){ambReal++;process.stdout.write(` [amb OK]`);}
         }catch(e){}
-      } else {
-        ambrosiano=ex.ambrosiano;
+        await sleep(DELAY/2);
       }
 
       gospels[iso]={
         romano,
-        ambrosiano:ambrosiano
-          ?{...ambrosiano,commentTitle:romano.commentTitle,commentAuthor:romano.commentAuthor,commentText:romano.commentText}
+        ambrosiano:amb
+          ?{...amb,commentTitle:romano.commentTitle,commentAuthor:romano.commentAuthor,commentText:romano.commentText}
           :{reference:romano.reference+' (rito romano)',text:romano.text,
             commentTitle:romano.commentTitle,commentAuthor:romano.commentAuthor,commentText:romano.commentText},
       };
       dl++;
-      if(dl%SAVE_N===0) fs.writeFileSync(OUTPUT,JSON.stringify(gospels,null,2),'utf8');
+      if(dl%5===0) fs.writeFileSync(OUTPUT,JSON.stringify(gospels,null,2),'utf8');
     }catch(e){
       err++;
-      process.stdout.write(`\n   ERR ${iso}: ${e.message}\n`);
+      process.stdout.write(`\n  ERR ${iso}: ${e.message}\n`);
     }
   }
 
@@ -201,8 +241,7 @@ async function main(){
   const kb=Math.round(fs.statSync(OUTPUT).size/1024);
   const tot=Object.keys(sorted).length;
   const ambTot=Object.values(sorted).filter(v=>!v.ambrosiano?.reference?.includes('rito romano')).length;
-  console.log(`\n\n✅  Scaricati:${dl} Saltati:${sk} Errori:${err}`);
-  console.log(`   Totale:${tot} giorni | Ambrosiano reale:${ambTot} | ${kb}KB\n`);
+  console.log(`\n\n  Scaricati:${dl} | Saltati:${sk} | Errori:${err}`);
+  console.log(`  Totale:${tot} | Ambrosiano reale:${ambTot} | ${kb}KB\n`);
 }
-
 main().catch(e=>{console.error(e);process.exit(1);});
