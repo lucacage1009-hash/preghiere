@@ -5,7 +5,7 @@ Segui questi 5 passi per attivare le intenzioni condivise.
 ---
 
 ## Passo 1 — Crea un account Supabase gratuito
-
+ 
 Vai su https://supabase.com e clicca "Start your project" (gratis, no carta di credito).
 
 ---
