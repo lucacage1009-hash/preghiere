@@ -41,8 +41,7 @@
       <div id="gospel-content" class="hidden">
         <p class="gospel-ref" id="gospel-reference"></p>
         <div class="gospel-body" id="gospel-text"></div>
-        <a class="text-link" id="gospel-source-link" target="_blank" rel="noopener noreferrer">Leggi la versione completa &#8594;</a>
-        <!-- COMMENTO sempre dentro gospel-content, mai animato separatamente -->
+        <a class="text-link" id="gospel-source-link" target="_blank" rel="noopener noreferrer">Fonte ufficiale &#8594;</a>
         <div id="comment-section" class="hidden">
           <div class="comment-sep"></div>
           <span class="comment-tag">Commento al Vangelo</span>
@@ -232,43 +231,37 @@
     </div>
   </section>
 
-  <!-- INTENZIONI -->
+  <!-- INTENZIONI PERSONALI -->
   <section class="block">
-    <div class="block-eyebrow">Cappella delle Intenzioni</div>
+    <div class="block-eyebrow">Le Mie Intenzioni</div>
     <div class="card intentions-card">
-      <p class="intentions-intro">Scrivi la tua intenzione di preghiera. Sar&#224; condivisa con tutti i fedeli che visitano questa pagina.</p>
-
-      <div class="intentions-form">
-        <textarea id="intentions-text" class="intentions-ta" maxlength="400"
-          placeholder="La mia intenzione di preghiera&#8230;" aria-label="Intenzione di preghiera"></textarea>
-        <div class="char-count"><span id="char-count">0</span>/400</div>
-        <div class="intentions-actions">
-          <button class="btn-primary" id="send-intention">Condividi &#43; Prega</button>
-          <span class="save-status" id="save-status" aria-live="polite"></span>
+      <div class="intentions-compose">
+        <textarea id="int-input" class="int-textarea"
+          placeholder="Scrivi un&#8217;intenzione di preghiera&#8230;"
+          maxlength="500" rows="3" aria-label="Nuova intenzione"></textarea>
+        <div class="int-compose-footer">
+          <span class="int-charcount"><span id="int-chars">0</span>/500</span>
+          <button class="btn-int-add" id="int-add-btn">Aggiungi</button>
         </div>
       </div>
-
-      <div class="intentions-board">
-        <p class="board-header">Intenzioni della Cappella</p>
-        <div class="board-loading hidden" id="board-loading"><div class="spinner-sm"></div></div>
-        <div class="board-list" id="board-list"></div>
-        <p class="board-empty hidden" id="board-empty">Nessuna intenzione ancora. Sii il primo.</p>
-        <p class="no-backend-note hidden" id="no-backend-note">
-          Le intenzioni condivise richiedono Supabase. Segui le istruzioni in <code>config.js</code> per attivare questa funzione.
-        </p>
+      <div class="int-list" id="int-list">
+        <!-- filled by JS -->
       </div>
+      <p class="int-empty hidden" id="int-empty">Nessuna intenzione ancora. Affida al Signore ci&#242; che porti nel cuore.</p>
     </div>
   </section>
 
 </main>
 
+<!-- STREAK -->
+<div class="streak-bar" id="streak-bar" aria-label="Il tuo cammino di preghiera"></div>
+
 <footer class="site-footer">
-  <p class="footer-verse">&#171;Chiedete e vi sar&#224; dato&#187; <em>Mt 7,7</em></p>
-  <p class="footer-copy">Fatto con &#10084; per la gloria di Dio</p>
+  <p class="footer-quote">&#171;Dobbiamo sempre mettere in discussione noi stessi, dobbiamo partire da noi stessi&#187;</p>
+  <p class="footer-ref">&#8212; Luigi Giussani</p>
 </footer>
 
 <script src="giussani.js"></script>
-<script src="config.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
