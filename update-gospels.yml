@@ -1,0 +1,55 @@
+name: Aggiorna Vangeli
+
+on:
+  # Ogni anno il 1° dicembre scarica l'anno successivo
+  schedule:
+    - cron: '0 6 1 12 *'
+
+  # Puoi anche lanciarlo manualmente dalla scheda "Actions" su GitHub
+  workflow_dispatch:
+    inputs:
+      year:
+        description: 'Anno da scaricare (es. 2027). Lascia vuoto per anno prossimo.'
+        required: false
+        default: ''
+
+jobs:
+  fetch-gospels:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write   # serve per fare il commit nel repo
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Calcola anno target
+        id: year
+        run: |
+          INPUT="${{ github.event.inputs.year }}"
+          if [ -n "$INPUT" ]; then
+            echo "target=$INPUT" >> $GITHUB_OUTPUT
+          else
+            # Se schedulato (1 dic), scarica l'anno successivo
+            NEXT=$(( $(date +%Y) + 1 ))
+            echo "target=$NEXT" >> $GITHUB_OUTPUT
+          fi
+          echo "Anno target: $(cat $GITHUB_OUTPUT | grep target)"
+
+      - name: Scarica vangeli per ${{ steps.year.outputs.target }}
+        run: node fetch-gospels.js ${{ steps.year.outputs.target }}
+
+      - name: Commit gospels.json aggiornato
+        run: |
+          git config user.name  "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add gospels.json
+          # Commit solo se ci sono modifiche
+          git diff --staged --quiet || git commit -m "✝ Aggiorna vangeli ${{ steps.year.outputs.target }}"
+          git push
