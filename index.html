@@ -13,8 +13,8 @@
 <body>
 
   <button class="theme-toggle" id="theme-toggle" aria-label="Cambia tema">
-    <span class="theme-icon theme-icon--dark">☽</span>
-    <span class="theme-icon theme-icon--light">○</span>
+    <span class="theme-icon theme-icon--dark">&#9789;</span>
+    <span class="theme-icon theme-icon--light">&#9675;</span>
   </button>
 
   <header class="site-header">
@@ -23,33 +23,28 @@
       <h1 class="site-title">Preghiere<br/><em>Quotidiane</em></h1>
       <p class="site-date" id="site-date"></p>
     </div>
-    <div class="header-cross" aria-hidden="true">✝</div>
+    <div class="header-cross" aria-hidden="true">&#10013;</div>
   </header>
 
   <main class="main">
 
-    <!-- ── VANGELO ─────────────────────────────── -->
+    <!-- VANGELO -->
     <section class="block" id="vangelo">
       <div class="block-eyebrow">Vangelo del Giorno</div>
-
       <div class="rite-tabs" role="group" aria-label="Rito liturgico">
         <button class="rite-tab active" data-rite="romano" aria-pressed="true">Romano</button>
         <button class="rite-tab" data-rite="ambrosiano" aria-pressed="false">Ambrosiano</button>
       </div>
-
       <div class="card gospel-card" id="gospel-card">
-
         <div class="gospel-loading" id="gospel-loading">
           <div class="spinner" aria-hidden="true"></div>
-          <p>Caricamento…</p>
+          <p>Caricamento&hellip;</p>
         </div>
-
         <div class="gospel-content hidden" id="gospel-content">
           <p class="gospel-ref" id="gospel-reference"></p>
           <div class="gospel-body" id="gospel-text"></div>
-          <a class="text-link" id="gospel-source-link" target="_blank" rel="noopener noreferrer">Fonte completa →</a>
+          <a class="text-link" id="gospel-source-link" target="_blank" rel="noopener noreferrer">Fonte completa &rarr;</a>
         </div>
-
         <div class="gospel-comment hidden" id="comment-section">
           <div class="comment-sep" aria-hidden="true"></div>
           <span class="comment-tag">Commento</span>
@@ -57,36 +52,34 @@
           <div class="comment-body" id="comment-text"></div>
           <p class="comment-author" id="comment-author"></p>
         </div>
-
         <div class="gospel-error hidden" id="gospel-error">
           <p class="error-head">Vangelo non disponibile</p>
           <p class="error-sub">Visita direttamente:</p>
           <div class="error-links" id="error-links"></div>
           <button class="btn-outline" id="retry-btn">Riprova</button>
         </div>
-
       </div>
     </section>
 
-    <!-- ── GIUSSANI ────────────────────────────── -->
+    <!-- GIUSSANI -->
     <section class="block" id="giussani">
       <div class="block-eyebrow">Don Luigi Giussani</div>
       <div class="card giussani-card">
-        <div class="giussani-quote-mark" aria-hidden="true">"</div>
-        <div class="giussani-text" id="giussani-text"></div>
+        <div class="giussani-quote-mark" aria-hidden="true">&ldquo;</div>
+        <div class="giussani-text" id="giussani-text"><p>Caricamento&hellip;</p></div>
         <p class="giussani-source" id="giussani-source"></p>
       </div>
     </section>
 
-    <!-- ── PREGHIERE ───────────────────────────── -->
+    <!-- PREGHIERE -->
     <section class="block" id="preghiere">
       <div class="block-eyebrow">Le Mie Preghiere</div>
-
       <div class="prayers-list">
 
+        <!-- Mattino -->
         <div class="prayer-item" data-prayer="mattino">
           <button class="prayer-toggle" aria-expanded="false">
-            <span class="prayer-icon">☀</span>
+            <span class="prayer-icon">&#9728;</span>
             <span class="prayer-info">
               <span class="prayer-tag">Mattino</span>
               <span class="prayer-name">Guidami, Signore</span>
@@ -94,16 +87,58 @@
             <span class="prayer-chevron" aria-hidden="true"></span>
           </button>
           <div class="prayer-body hidden" id="body-mattino">
-            <p>Signore, guidami in questo nuovo giorno, perché io possa riconoscere e abbracciare ciò che è bene e sconfiggere ciò che è male e le tentazioni che incontrerò.</p>
-            <p>Aiutami a far sì che tutto il mio lavoro e lo studio siano efficaci strumenti per Te, e manda lo Spirito Santo su di me per consigliarmi e guidarmi in ogni cosa.</p>
+            <p>Signore, guidami in questo nuovo giorno, perch&eacute; io possa riconoscere e abbracciare ci&ograve; che &egrave; bene e sconfiggere ci&ograve; che &egrave; male e le tentazioni che incontrer&ograve;.</p>
+            <p>Aiutami a far s&igrave; che tutto il mio lavoro e lo studio siano efficaci strumenti per Te, e manda lo Spirito Santo su di me per consigliarmi e guidarmi in ogni cosa.</p>
             <p>Per intercessione di Carlo Acutis, non dimenticarti di questo tuo servo.</p>
             <p class="amen">Amen.</p>
           </div>
         </div>
 
+        <!-- Angelus -->
+        <div class="prayer-item" data-prayer="angelus">
+          <button class="prayer-toggle" aria-expanded="false">
+            <span class="prayer-icon">&#127859;</span>
+            <span class="prayer-info">
+              <span class="prayer-tag">Angelus</span>
+              <span class="prayer-name">L&rsquo;Angelo del Signore</span>
+            </span>
+            <span class="prayer-chevron" aria-hidden="true"></span>
+          </button>
+          <div class="prayer-body hidden" id="body-angelus">
+            <div class="bilingual">
+              <div class="bilingual-col">
+                <p class="lang-label">Italiano</p>
+                <p>L&rsquo;Angelo del Signore port&ograve; l&rsquo;annunzio a Maria<br/>ed ella concep&igrave; dall&rsquo;opera dello Spirito Santo.</p>
+                <p class="ave">Ave Maria&hellip;</p>
+                <p>Eccomi, sono la serva del Signore,<br/>avvenga di me quello che hai detto.</p>
+                <p class="ave">Ave Maria&hellip;</p>
+                <p>E il Verbo si fece carne<br/>e venne ad abitare in mezzo a noi.</p>
+                <p class="ave">Ave Maria&hellip;</p>
+                <p>Prega per noi, santa Madre di Dio.<br/><em>Perch&eacute; siamo resi degni delle promesse di Cristo.</em></p>
+                <p>Preghiamo: Infondi nel nostro spirito la tua grazia, o Signore; tu che con l&rsquo;annunzio dell&rsquo;Angelo ci hai rivelato l&rsquo;Incarnazione del tuo Figlio, con la sua passione e la sua croce siamo portati alla gloria della risurrezione. Per Cristo nostro Signore.</p>
+                <p class="amen">Amen.</p>
+              </div>
+              <div class="bilingual-divider" aria-hidden="true"></div>
+              <div class="bilingual-col">
+                <p class="lang-label">Deutsch</p>
+                <p>Der Engel des Herrn brachte Maria die Botschaft<br/>und sie empfing vom Heiligen Geist.</p>
+                <p class="ave">Gegrü&szlig;et seist du, Maria&hellip;</p>
+                <p>Ich bin die Magd des Herrn;<br/>mir geschehe, wie du es gesagt hast.</p>
+                <p class="ave">Gegrü&szlig;et seist du, Maria&hellip;</p>
+                <p>Und das Wort ist Fleisch geworden<br/>und hat unter uns gewohnt.</p>
+                <p class="ave">Gegrü&szlig;et seist du, Maria&hellip;</p>
+                <p>Bitte f&uuml;r uns, heilige Gottesmutter.<br/><em>Damit wir w&uuml;rdig werden der Verhei&szlig;ungen Christi.</em></p>
+                <p>Lasset uns beten: Wir bitten dich, o Herr: Gie&szlig; deine Gnade in unsere Herzen, damit wir, die wir durch die Botschaft des Engels die Menschwerdung Christi erkannt haben, durch sein Leiden und Kreuz zur Herrlichkeit der Auferstehung gef&uuml;hrt werden. Durch Christus, unseren Herrn.</p>
+                <p class="amen">Amen.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tentazione -->
         <div class="prayer-item" data-prayer="tentazione">
           <button class="prayer-toggle" aria-expanded="false">
-            <span class="prayer-icon">⚔</span>
+            <span class="prayer-icon">&#9876;</span>
             <span class="prayer-info">
               <span class="prayer-tag">Tentazione</span>
               <span class="prayer-name">Coraggio e Forza</span>
@@ -111,16 +146,17 @@
             <span class="prayer-chevron" aria-hidden="true"></span>
           </button>
           <div class="prayer-body hidden" id="body-tentazione">
-            <p>Signore Gesù, donami coraggio e forza in questo momento di tentazione. Aiutami a riconoscere ciò che è veramente bene e a non distrarmi né cedere a compromessi ingannevoli.</p>
-            <p>Fa' che sia in questi attimi, quando tutto sembra vacillare, che la mia fede si riveli e cresca.</p>
+            <p>Signore Ges&ugrave;, donami coraggio e forza in questo momento di tentazione. Aiutami a riconoscere ci&ograve; che &egrave; veramente bene e a non distrarmi n&eacute; cedere a compromessi ingannevoli.</p>
+            <p>Fa&rsquo; che sia in questi attimi, quando tutto sembra vacillare, che la mia fede si riveli e cresca.</p>
             <p>Maria, Madre potente, intercedi per me e proteggimi dal peccato.</p>
             <p class="amen">Amen.</p>
           </div>
         </div>
 
+        <!-- Caduta -->
         <div class="prayer-item" data-prayer="caduta">
           <button class="prayer-toggle" aria-expanded="false">
-            <span class="prayer-icon">🕊</span>
+            <span class="prayer-icon">&#128362;</span>
             <span class="prayer-info">
               <span class="prayer-tag">Dopo la Caduta</span>
               <span class="prayer-name">Rialzami, Signore</span>
@@ -128,17 +164,18 @@
             <span class="prayer-chevron" aria-hidden="true"></span>
           </button>
           <div class="prayer-body hidden" id="body-caduta">
-            <p>Signore, tu hai visto la mia lotta e sai che non volevo cadere, eppure sono caduto. Il mio cuore è confuso e mi sento debole, ma non voglio allontanarmi da Te proprio adesso.</p>
-            <p>Perdonami, Signore. Rialzami ancora una volta. Non lasciare che la mia caduta diventi disperazione o che il nemico mi convinca che ormai è tutto perduto.</p>
-            <p>Tu conosci la mia fragilità meglio di me: insegnami a ricominciare con più umiltà, con più vigilanza e con più fiducia nella Tua grazia.</p>
+            <p>Signore, tu hai visto la mia lotta e sai che non volevo cadere, eppure sono caduto. Il mio cuore &egrave; confuso e mi sento debole, ma non voglio allontanarmi da Te proprio adesso.</p>
+            <p>Perdonami, Signore. Rialzami ancora una volta. Non lasciare che la mia caduta diventi disperazione o che il nemico mi convinca che ormai &egrave; tutto perduto.</p>
+            <p>Tu conosci la mia fragilit&agrave; meglio di me: insegnami a ricominciare con pi&ugrave; umilt&agrave;, con pi&ugrave; vigilanza e con pi&ugrave; fiducia nella Tua grazia.</p>
             <p>Rimettimi in piedi, Signore, e guidami di nuovo sulla Tua strada.</p>
             <p class="amen">Amen.</p>
           </div>
         </div>
 
+        <!-- Inizio -->
         <div class="prayer-item" data-prayer="inizio">
           <button class="prayer-toggle" aria-expanded="false">
-            <span class="prayer-icon">✏</span>
+            <span class="prayer-icon">&#9999;</span>
             <span class="prayer-info">
               <span class="prayer-tag">Prima di un Impegno</span>
               <span class="prayer-name">Tutto a Te</span>
@@ -146,15 +183,16 @@
             <span class="prayer-chevron" aria-hidden="true"></span>
           </button>
           <div class="prayer-body hidden" id="body-inizio">
-            <p>Gesù, mentre inizio ciò che mi accingi a farmi vivere, ti affido tutto me stesso. Guidami affinché tutto ciò che faccio possa servirTi davvero.</p>
-            <p>Illumina i miei pensieri e guidami nelle scelte, fa' che ogni mio sforzo diventi strumento per Te.</p>
+            <p>Ges&ugrave;, mentre inizio ci&ograve; che mi accingi a farmi vivere, ti affido tutto me stesso. Guidami affinch&eacute; tutto ci&ograve; che faccio possa servirTi davvero.</p>
+            <p>Illumina i miei pensieri e guidami nelle scelte, fa&rsquo; che ogni mio sforzo diventi strumento per Te.</p>
             <p class="amen">Amen.</p>
           </div>
         </div>
 
+        <!-- Maria -->
         <div class="prayer-item" data-prayer="maria">
           <button class="prayer-toggle" aria-expanded="false">
-            <span class="prayer-icon">🌹</span>
+            <span class="prayer-icon">&#127801;</span>
             <span class="prayer-info">
               <span class="prayer-tag">Mariana</span>
               <span class="prayer-name">Santa Maria, Madre di Dio</span>
@@ -162,9 +200,27 @@
             <span class="prayer-chevron" aria-hidden="true"></span>
           </button>
           <div class="prayer-body hidden" id="body-maria">
-            <p>Santa Maria, Madre di Dio, tu che mai trascuri chi ti chiama, rendimi saldo nella fede e pronto al servizio di Dio. Fa' che la mia vita sia uno strumento nelle mani di Dio.</p>
-            <p>In questo momento affido a te i miei pensieri e desideri. Guida i miei passi, rafforza la mia volontà, e rendimi capace di compiere il bene che vuoi.</p>
-            <p>Mantienimi saldo nelle prove, fai brillare la tua luce dove c'è oscurità, e insegnami a camminare con coraggio sulla via della fede.</p>
+            <p>Santa Maria, Madre di Dio, tu che mai trascuri chi ti chiama, rendimi saldo nella fede e pronto al servizio di Dio. Fa&rsquo; che la mia vita sia uno strumento nelle mani di Dio.</p>
+            <p>In questo momento affido a te i miei pensieri e desideri. Guida i miei passi, rafforza la mia volont&agrave;, e rendimi capace di compiere il bene che vuoi.</p>
+            <p>Mantienimi saldo nelle prove, fai brillare la tua luce dove c&rsquo;&egrave; oscurit&agrave;, e insegnami a camminare con coraggio sulla via della fede.</p>
+            <p class="amen">Amen.</p>
+          </div>
+        </div>
+
+        <!-- Sera -->
+        <div class="prayer-item" data-prayer="sera">
+          <button class="prayer-toggle" aria-expanded="false">
+            <span class="prayer-icon">&#9790;</span>
+            <span class="prayer-info">
+              <span class="prayer-tag">Sera</span>
+              <span class="prayer-name">Ti adoro, mio Dio</span>
+            </span>
+            <span class="prayer-chevron" aria-hidden="true"></span>
+          </button>
+          <div class="prayer-body hidden" id="body-sera">
+            <p>Ti adoro, mio Dio, e ti amo con tutto il cuore. Ti ringrazio di avermi creato, fatto cristiano e conservato in questo giorno.</p>
+            <p>Perdonami il male che ho fatto oggi. Se ho fatto qualcosa di buono, accettalo e fallo fruttare.</p>
+            <p>Custodisci il mio sonno, liberami dal peccato e da ogni pericolo. Nelle tue mani, Signore, affido il mio spirito.</p>
             <p class="amen">Amen.</p>
           </div>
         </div>
@@ -172,25 +228,44 @@
       </div>
     </section>
 
-    <!-- ── INTENZIONI ──────────────────────────── -->
+    <!-- INTENZIONI COMUNI -->
     <section class="block" id="intenzioni">
-      <div class="block-eyebrow">Le Mie Intenzioni</div>
+      <div class="block-eyebrow">Intenzioni di Preghiera</div>
       <div class="card intentions-card">
-        <p class="intentions-intro">Affida al Signore le intenzioni del tuo cuore. Restano sul tuo dispositivo.</p>
-        <textarea id="intentions-text" class="intentions-ta" placeholder="Scrivi le tue intenzioni di preghiera…" aria-label="Intenzioni di preghiera"></textarea>
-        <div class="intentions-actions">
-          <button class="btn-primary" id="save-intentions">Salva</button>
-          <span class="save-status" id="save-status" aria-live="polite"></span>
-          <button class="btn-ghost" id="clear-intentions">Cancella</button>
+
+        <div class="intentions-config hidden" id="intentions-config">
+          <p class="config-msg">&#9888; Per attivare le intenzioni condivise, segui le istruzioni in <strong>SETUP_INTENZIONI.md</strong> e inserisci le tue credenziali Supabase in <code>app.js</code>.</p>
         </div>
+
+        <div id="intentions-main">
+          <p class="intentions-intro">Scrivi la tua intenzione: sar&agrave; aggiunta alla cappella comune, visibile a tutti. Insieme pregheremo per le tue intenzioni.</p>
+          <textarea id="intentions-text" class="intentions-ta" placeholder="La mia intenzione di preghiera&hellip;" aria-label="Intenzione di preghiera" maxlength="400"></textarea>
+          <div class="char-count"><span id="char-count">0</span>/400</div>
+          <div class="intentions-actions">
+            <button class="btn-primary" id="save-intentions">Affida alla cappella &#10013;</button>
+            <span class="save-status" id="save-status" aria-live="polite"></span>
+          </div>
+        </div>
+
+        <div class="chapel-divider" aria-hidden="true"></div>
+
+        <div class="chapel-header">
+          <span class="chapel-title">Cappella comune</span>
+          <span class="chapel-subtitle">Prega per le intenzioni dei fratelli</span>
+        </div>
+
+        <div class="chapel-list" id="chapel-list">
+          <p class="chapel-loading" id="chapel-loading">Caricamento intenzioni&hellip;</p>
+        </div>
+
       </div>
     </section>
 
   </main>
 
   <footer class="site-footer">
-    <p class="footer-verse">«Chiedete e vi sarà dato» <em>Mt 7,7</em></p>
-    <p class="footer-copy">Fatto con ❤ per la gloria di Dio</p>
+    <p class="footer-verse">&laquo;Chiedete e vi sar&agrave; dato&raquo; <em>Mt 7,7</em></p>
+    <p class="footer-copy">Fatto con &hearts; per la gloria di Dio</p>
   </footer>
 
   <script src="giussani.js"></script>
