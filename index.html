@@ -7,14 +7,60 @@
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;0,9..144,900;1,9..144,300;1,9..144,500;1,9..144,700&family=Barlow:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
 
-<button class="theme-toggle" id="theme-toggle" aria-label="Cambia tema">
-  <span class="theme-icon theme-icon--dark">&#9789;</span>
-  <span class="theme-icon theme-icon--light">&#9675;</span>
-</button>
+<!-- Auth Modal -->
+<div id="auth-overlay" class="auth-overlay hidden">
+  <div class="auth-modal">
+    <button class="auth-close" id="auth-close" aria-label="Chiudi">&#215;</button>
+    <div class="auth-logo">&#10013;</div>
+    <h2 class="auth-title" id="auth-title">Accedi</h2>
+    <p class="auth-sub" id="auth-sub">I tuoi dati personali sono cifrati e sincronizzati su tutti i dispositivi.</p>
+    <form class="auth-form" id="auth-form" autocomplete="on">
+      <input type="email"    id="auth-email"    class="auth-input" placeholder="Email" autocomplete="email"    required/>
+      <input type="password" id="auth-password" class="auth-input" placeholder="Password (min. 8 caratteri)" autocomplete="current-password" required minlength="8"/>
+      <div class="auth-error hidden" id="auth-error"></div>
+      <button type="submit" class="btn-primary" id="auth-submit">Accedi</button>
+    </form>
+    <button class="auth-switch" id="auth-switch">Non hai un account? <strong>Registrati</strong></button>
+  </div>
+</div>
+
+<!-- Prayer Editor Modal -->
+<div id="prayer-editor-overlay" class="auth-overlay hidden">
+  <div class="auth-modal prayer-editor-modal">
+    <button class="auth-close" id="pe-close" aria-label="Chiudi">&#215;</button>
+    <h2 class="auth-title" id="pe-title">Modifica Preghiera</h2>
+    <form class="auth-form" id="pe-form">
+      <div class="pe-row">
+        <input type="text" id="pe-emoji" class="auth-input pe-emoji" placeholder="&#128512;" maxlength="4"/>
+        <input type="text" id="pe-tag"   class="auth-input pe-tag"   placeholder="Categoria (es. Mattino)" maxlength="30"/>
+      </div>
+      <input type="text" id="pe-name" class="auth-input" placeholder="Titolo della preghiera" maxlength="60" required/>
+      <textarea id="pe-text" class="auth-input pe-textarea" placeholder="Testo della preghiera&#8230;" required></textarea>
+      <div class="pe-actions">
+        <button type="submit" class="btn-primary">Salva</button>
+        <button type="button" class="btn-outline" id="pe-cancel">Annulla</button>
+        <button type="button" class="btn-danger hidden" id="pe-delete">Elimina</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Theme toggle + Auth button -->
+<div class="top-bar">
+  <button class="theme-toggle" id="theme-toggle" aria-label="Cambia tema">
+    <span class="theme-icon theme-icon--dark">&#9789;</span>
+    <span class="theme-icon theme-icon--light">&#9675;</span>
+  </button>
+  <button class="auth-btn" id="auth-btn" aria-label="Account">
+    <span id="auth-btn-icon">&#128100;</span>
+    <span id="auth-btn-label">Accedi</span>
+  </button>
+</div>
 
 <header class="site-header">
   <div class="header-inner">
@@ -35,9 +81,7 @@
       <button class="rite-tab"        data-rite="ambrosiano" aria-pressed="false">Ambrosiano</button>
     </div>
     <div class="card gospel-card">
-      <div id="gospel-loading" class="gospel-loading">
-        <div class="spinner"></div><p>Caricamento&#8230;</p>
-      </div>
+      <div id="gospel-loading" class="gospel-loading"><div class="spinner"></div><p>Caricamento&#8230;</p></div>
       <div id="gospel-content" class="hidden">
         <p class="gospel-ref" id="gospel-reference"></p>
         <div class="gospel-body" id="gospel-text"></div>
@@ -48,6 +92,16 @@
           <p class="comment-title" id="comment-title"></p>
           <div class="comment-body" id="comment-text"></div>
           <p class="comment-author" id="comment-author"></p>
+        </div>
+        <!-- Annotazione personale al vangelo -->
+        <div class="gospel-annotation">
+          <div class="comment-sep"></div>
+          <label class="annotation-label" for="gospel-note">La mia riflessione di oggi</label>
+          <textarea id="gospel-note" class="annotation-ta" placeholder="Scrivi qui la tua riflessione sul vangelo di oggi&#8230;" rows="3"></textarea>
+          <div class="annotation-footer">
+            <button class="btn-annotation-save" id="save-gospel-note">Salva riflessione</button>
+            <span class="save-status" id="note-save-status" aria-live="polite"></span>
+          </div>
         </div>
       </div>
       <div id="gospel-error" class="hidden gospel-error">
@@ -71,163 +125,15 @@
 
   <!-- PREGHIERE -->
   <section class="block">
-    <div class="block-eyebrow">Le Mie Preghiere</div>
-    <div class="prayers-list">
-
-      <div class="prayer-item" data-prayer="mattino">
-        <button class="prayer-toggle" aria-expanded="false">
-          <span class="prayer-icon">&#9728;</span>
-          <span class="prayer-info">
-            <span class="prayer-tag">Mattino</span>
-            <span class="prayer-name">Guidami, Signore</span>
-          </span>
-          <span class="prayer-chevron" aria-hidden="true"></span>
-        </button>
-        <div class="prayer-body hidden" id="body-mattino">
-          <p>Signore, guidami in questo nuovo giorno, perch&#233; io possa riconoscere e abbracciare ci&#242; che &#232; bene e sconfiggere ci&#242; che &#232; male e le tentazioni che incontrer&#242;.</p>
-          <p>Aiutami a far s&#236; che tutto il mio lavoro e lo studio siano efficaci strumenti per Te, e manda lo Spirito Santo su di me per consigliarmi e guidarmi in ogni cosa.</p>
-          <p>Per intercessione di Carlo Acutis, non dimenticarti di questo tuo servo.</p>
-          <p class="amen">Amen.</p>
-        </div>
+    <div class="block-eyebrow-row">
+      <span class="block-eyebrow">Le Mie Preghiere</span>
+      <div class="prayers-controls">
+        <button class="btn-icon-sm" id="add-prayer-btn" title="Aggiungi preghiera">&#43; Aggiungi</button>
+        <button class="btn-icon-sm btn-ghost-sm" id="reset-prayers-btn" title="Ripristina predefinite">Ripristina</button>
       </div>
-
-      <div class="prayer-item" data-prayer="angelus">
-        <button class="prayer-toggle" aria-expanded="false">
-          <span class="prayer-icon">&#128276;</span>
-          <span class="prayer-info">
-            <span class="prayer-tag">Mezzogiorno</span>
-            <span class="prayer-name">Angelus Domini</span>
-          </span>
-          <span class="prayer-chevron" aria-hidden="true"></span>
-        </button>
-        <div class="prayer-body hidden" id="body-angelus">
-          <div class="angelus-grid">
-            <div class="angelus-col">
-              <span class="lang-badge">Italiano</span>
-              <div class="angelus-verses">
-                <p><span class="verse-v">V.</span> L&#8217;Angelo del Signore port&#242; l&#8217;annuncio a Maria.</p>
-                <p><span class="verse-r">R.</span> Ed ella concep&#236; dallo Spirito Santo.</p>
-                <p class="verse-italic">Ave Maria&#8230;</p>
-                <p><span class="verse-v">V.</span> Eccomi, sono la serva del Signore.</p>
-                <p><span class="verse-r">R.</span> Avvenga di me quello che hai detto.</p>
-                <p class="verse-italic">Ave Maria&#8230;</p>
-                <p><span class="verse-v">V.</span> E il Verbo si fece carne.</p>
-                <p><span class="verse-r">R.</span> E venne ad abitare in mezzo a noi.</p>
-                <p class="verse-italic">Ave Maria&#8230;</p>
-                <p><span class="verse-v">V.</span> Prega per noi, santa Madre di Dio.</p>
-                <p><span class="verse-r">R.</span> Perch&#233; siamo resi degni delle promesse di Cristo.</p>
-                <p class="verse-prayer">Infondi nell&#8217;animo nostro la tua grazia, o Signore: tu, che nell&#8217;annuncio dell&#8217;Angelo ci hai rivelato l&#8217;Incarnazione del tuo Figlio, per la sua passione e la sua croce guidaci alla gloria della Risurrezione. Per Cristo nostro Signore.</p>
-                <p class="amen">Amen.</p>
-              </div>
-            </div>
-            <div class="angelus-divider" aria-hidden="true"></div>
-            <div class="angelus-col">
-              <span class="lang-badge lang-badge--de">Deutsch</span>
-              <div class="angelus-verses">
-                <p><span class="verse-v">V.</span> Der Engel des Herrn brachte Maria die Botschaft.</p>
-                <p><span class="verse-r">R.</span> Und sie empfing vom Heiligen Geist.</p>
-                <p class="verse-italic">Gegr&#252;&#223;et seist du, Maria&#8230;</p>
-                <p><span class="verse-v">V.</span> Ich bin die Magd des Herrn.</p>
-                <p><span class="verse-r">R.</span> Mir geschehe nach deinem Wort.</p>
-                <p class="verse-italic">Gegr&#252;&#223;et seist du, Maria&#8230;</p>
-                <p><span class="verse-v">V.</span> Und das Wort ist Fleisch geworden.</p>
-                <p><span class="verse-r">R.</span> Und hat unter uns gewohnt.</p>
-                <p class="verse-italic">Gegr&#252;&#223;et seist du, Maria&#8230;</p>
-                <p><span class="verse-v">V.</span> Bitte f&#252;r uns, heilige Gottesmutter.</p>
-                <p><span class="verse-r">R.</span> Damit wir der Verhe&#223;ung Christi w&#252;rdig werden.</p>
-                <p class="verse-prayer">Herr, erf&#252;lle unsere Herzen mit deiner Gnade. Du hast uns durch die Botschaft des Engels die Menschwerdung Christi, deines Sohnes, offenbart. Lass uns durch sein Leiden und Kreuz zur Herrlichkeit der Auferstehung gelangen. Darum bitten wir durch Christus, unseren Herrn.</p>
-                <p class="amen">Amen.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="prayer-item" data-prayer="tentazione">
-        <button class="prayer-toggle" aria-expanded="false">
-          <span class="prayer-icon">&#9876;</span>
-          <span class="prayer-info">
-            <span class="prayer-tag">Tentazione</span>
-            <span class="prayer-name">Coraggio e Forza</span>
-          </span>
-          <span class="prayer-chevron" aria-hidden="true"></span>
-        </button>
-        <div class="prayer-body hidden" id="body-tentazione">
-          <p>Signore Ges&#249;, donami coraggio e forza in questo momento di tentazione. Aiutami a riconoscere ci&#242; che &#232; veramente bene e a non distrarmi n&#233; cedere a compromessi ingannevoli.</p>
-          <p>Fa&#8217; che sia in questi attimi, quando tutto sembra vacillare, che la mia fede si riveli e cresca.</p>
-          <p>Maria, Madre potente, intercedi per me e proteggimi dal peccato.</p>
-          <p class="amen">Amen.</p>
-        </div>
-      </div>
-
-      <div class="prayer-item" data-prayer="caduta">
-        <button class="prayer-toggle" aria-expanded="false">
-          <span class="prayer-icon">&#128330;</span>
-          <span class="prayer-info">
-            <span class="prayer-tag">Dopo la Caduta</span>
-            <span class="prayer-name">Rialzami, Signore</span>
-          </span>
-          <span class="prayer-chevron" aria-hidden="true"></span>
-        </button>
-        <div class="prayer-body hidden" id="body-caduta">
-          <p>Signore, tu hai visto la mia lotta e sai che non volevo cadere, eppure sono caduto. Il mio cuore &#232; confuso e mi sento debole, ma non voglio allontanarmi da Te proprio adesso.</p>
-          <p>Perdonami, Signore. Rialzami ancora una volta. Non lasciare che la mia caduta diventi disperazione o che il nemico mi convinca che ormai &#232; tutto perduto.</p>
-          <p>Tu conosci la mia fragilit&#224; meglio di me: insegnami a ricominciare con pi&#249; umilt&#224;, con pi&#249; vigilanza e con pi&#249; fiducia nella Tua grazia.</p>
-          <p>Rimettimi in piedi, Signore, e guidami di nuovo sulla Tua strada.</p>
-          <p class="amen">Amen.</p>
-        </div>
-      </div>
-
-      <div class="prayer-item" data-prayer="inizio">
-        <button class="prayer-toggle" aria-expanded="false">
-          <span class="prayer-icon">&#9999;</span>
-          <span class="prayer-info">
-            <span class="prayer-tag">Prima di un Impegno</span>
-            <span class="prayer-name">Tutto a Te</span>
-          </span>
-          <span class="prayer-chevron" aria-hidden="true"></span>
-        </button>
-        <div class="prayer-body hidden" id="body-inizio">
-          <p>Ges&#249;, mentre inizio ci&#242; che mi accingi a farmi vivere, ti affido tutto me stesso. Guidami affinch&#233; tutto ci&#242; che faccio possa servirTi davvero.</p>
-          <p>Illumina i miei pensieri e guidami nelle scelte, fa&#8217; che ogni mio sforzo diventi strumento per Te.</p>
-          <p class="amen">Amen.</p>
-        </div>
-      </div>
-
-      <div class="prayer-item" data-prayer="maria">
-        <button class="prayer-toggle" aria-expanded="false">
-          <span class="prayer-icon">&#127801;</span>
-          <span class="prayer-info">
-            <span class="prayer-tag">Mariana</span>
-            <span class="prayer-name">Santa Maria, Madre di Dio</span>
-          </span>
-          <span class="prayer-chevron" aria-hidden="true"></span>
-        </button>
-        <div class="prayer-body hidden" id="body-maria">
-          <p>Santa Maria, Madre di Dio, tu che mai trascuri chi ti chiama, rendimi saldo nella fede e pronto al servizio di Dio. Fa&#8217; che la mia vita sia uno strumento nelle mani di Dio.</p>
-          <p>In questo momento affido a te i miei pensieri e desideri. Guida i miei passi, rafforza la mia volont&#224;, e rendimi capace di compiere il bene che vuoi.</p>
-          <p>Mantienimi saldo nelle prove, fai brillare la tua luce dove c&#8217;&#232; oscurit&#224;, e insegnami a camminare con coraggio sulla via della fede.</p>
-          <p class="amen">Amen.</p>
-        </div>
-      </div>
-
-      <div class="prayer-item" data-prayer="sera">
-        <button class="prayer-toggle" aria-expanded="false">
-          <span class="prayer-icon">&#9790;</span>
-          <span class="prayer-info">
-            <span class="prayer-tag">Sera</span>
-            <span class="prayer-name">Ti Adoro, Mio Dio</span>
-          </span>
-          <span class="prayer-chevron" aria-hidden="true"></span>
-        </button>
-        <div class="prayer-body hidden" id="body-sera">
-          <p>Ti adoro, mio Dio, e ti amo con tutto il cuore. Ti ringrazio di avermi creato, fatto cristiano e conservato in questo giorno.</p>
-          <p>Perdonami il male che ho fatto oggi e, se ho qualche grazia da chiederti, te la chiedo con umilt&#224;: custodisci nel sonno me e tutti i miei cari.</p>
-          <p>Fa&#8217; che il riposo di questa notte mi rinnovi nel corpo e nello spirito, perch&#233; domani io possa servirti con pi&#249; fervore e dedizione.</p>
-          <p class="amen">Amen.</p>
-        </div>
-      </div>
-
+    </div>
+    <div class="prayers-list" id="prayers-list">
+      <!-- filled by JS -->
     </div>
   </section>
 
@@ -236,32 +142,51 @@
     <div class="block-eyebrow">Le Mie Intenzioni</div>
     <div class="card intentions-card">
       <div class="intentions-compose">
-        <textarea id="int-input" class="int-textarea"
-          placeholder="Scrivi un&#8217;intenzione di preghiera&#8230;"
-          maxlength="500" rows="3" aria-label="Nuova intenzione"></textarea>
+        <textarea id="int-input" class="int-textarea" maxlength="500" rows="3"
+          placeholder="Scrivi un&#8217;intenzione di preghiera&#8230;" aria-label="Nuova intenzione"></textarea>
         <div class="int-compose-footer">
           <span class="int-charcount"><span id="int-chars">0</span>/500</span>
           <button class="btn-int-add" id="int-add-btn">Aggiungi</button>
         </div>
       </div>
-      <div class="int-list" id="int-list">
-        <!-- filled by JS -->
+      <div class="int-list" id="int-list"></div>
+      <p class="int-empty hidden" id="int-empty">Nessuna intenzione. Affida al Signore ci&#242; che porti nel cuore.</p>
+    </div>
+  </section>
+
+  <!-- APPUNTI PERSONALI -->
+  <section class="block">
+    <div class="block-eyebrow-row">
+      <span class="block-eyebrow">I Miei Appunti</span>
+      <button class="btn-icon-sm" id="add-note-btn">&#43; Nuovo</button>
+    </div>
+    <div class="notes-container" id="notes-container">
+      <div class="notes-list" id="notes-list"></div>
+      <div class="note-editor hidden" id="note-editor">
+        <input type="text" id="note-title-input" class="note-title-input" placeholder="Titolo&#8230;" maxlength="80"/>
+        <textarea id="note-content-input" class="note-content-input" placeholder="Scrivi qui i tuoi appunti&#8230;"></textarea>
+        <div class="note-editor-footer">
+          <button class="btn-primary" id="save-note-btn">Salva</button>
+          <button class="btn-outline" id="cancel-note-btn">Annulla</button>
+          <button class="btn-danger hidden" id="delete-note-btn">Elimina</button>
+          <span class="save-status" id="note-editor-status" aria-live="polite"></span>
+        </div>
       </div>
-      <p class="int-empty hidden" id="int-empty">Nessuna intenzione ancora. Affida al Signore ci&#242; che porti nel cuore.</p>
+      <p class="int-empty hidden" id="notes-empty">Nessun appunto ancora. Inizia a scrivere.</p>
     </div>
   </section>
 
 </main>
 
-<!-- STREAK -->
-<div class="streak-bar" id="streak-bar" aria-label="Il tuo cammino di preghiera"></div>
+<!-- Streak -->
+<div class="streak-bar" id="streak-bar"></div>
 
 <footer class="site-footer">
   <p class="footer-quote">&#171;Dobbiamo sempre mettere in discussione noi stessi, dobbiamo partire da noi stessi&#187;</p>
-  <p class="footer-ref">&#8212; Luigi Giussani</p>
 </footer>
 
 <script src="giussani.js"></script>
+<script src="config.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
