@@ -1,79 +1,61 @@
-# Configurazione Cappella delle Intenzioni
+# Setup Supabase per sincronizzazione cross-device
 
-Segui questi 5 passi per attivare le intenzioni condivise.
-
----
-
-## Passo 1 — Crea un account Supabase gratuito
- 
-Vai su https://supabase.com e clicca "Start your project" (gratis, no carta di credito).
-
----
-
-## Passo 2 — Crea un nuovo progetto
-
-- Clicca "New project"
-- Dagli un nome (es. `amdg-preghiere`)
-- Scegli una password per il database
-- Scegli la regione `Europe West` (Frankfurt)
-- Clicca "Create new project" e aspetta 1-2 minuti
-
----
-
-## Passo 3 — Crea la tabella `intentions`
-
-Nel pannello Supabase, clicca su **SQL Editor** nel menu a sinistra, poi incolla e lancia questo codice:
+## SQL da incollare in Supabase → SQL Editor → Run
 
 ```sql
--- Crea la tabella
+-- Intenzioni di preghiera
 create table intentions (
-  id         uuid default gen_random_uuid() primary key,
-  testo      text not null check (char_length(testo) <= 400),
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references auth.users not null,
+  text text not null check (char_length(text) <= 500),
+  done boolean default false,
   created_at timestamptz default now()
 );
-
--- Permetti a chiunque di leggere e scrivere (anonimo)
 alter table intentions enable row level security;
+create policy "own" on intentions using (auth.uid()=user_id) with check (auth.uid()=user_id);
 
-create policy "Lettura pubblica"
-  on intentions for select
-  using (true);
+-- Appunti personali
+create table notes (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references auth.users not null,
+  title text,
+  content text,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+alter table notes enable row level security;
+create policy "own" on notes using (auth.uid()=user_id) with check (auth.uid()=user_id);
 
-create policy "Scrittura pubblica"
-  on intentions for insert
-  with check (true);
+-- Annotazioni al vangelo (per data)
+create table gospel_notes (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references auth.users not null,
+  date text not null,
+  rite text not null default 'romano',
+  note text,
+  created_at timestamptz default now(),
+  unique(user_id, date, rite)
+);
+alter table gospel_notes enable row level security;
+create policy "own" on gospel_notes using (auth.uid()=user_id) with check (auth.uid()=user_id);
+
+-- Impostazioni (preghiere personalizzate)
+create table settings (
+  user_id uuid primary key references auth.users,
+  prayers jsonb,
+  updated_at timestamptz default now()
+);
+alter table settings enable row level security;
+create policy "own" on settings using (auth.uid()=user_id) with check (auth.uid()=user_id);
+
+-- Streak (giorni di visita)
+create table streak (
+  user_id uuid primary key references auth.users,
+  visits text[] default '{}',
+  updated_at timestamptz default now()
+);
+alter table streak enable row level security;
+create policy "own" on streak using (auth.uid()=user_id) with check (auth.uid()=user_id);
 ```
 
-Clicca **Run**.
-
----
-
-## Passo 4 — Copia le tue credenziali
-
-Nel pannello Supabase:
-1. Clicca su **Project Settings** (ingranaggio in basso a sinistra)
-2. Clicca **API**
-3. Copia:
-   - **Project URL** (es. `https://abcxyzabc.supabase.co`)
-   - **anon / public** key (la chiave lunga)
-
----
-
-## Passo 5 — Incollali in app.js
-
-Apri `app.js` nel repository GitHub e modifica le prime due righe:
-
-```javascript
-var SUPABASE_URL = 'https://TUOURL.supabase.co';   // <-- incolla qui
-var SUPABASE_KEY = 'eyJhbGci...';                   // <-- incolla qui
-```
-
-Salva (Commit changes). Fatto!
-
----
-
-## Risultato
-
-- Chiunque visiti il sito potra' scrivere la propria intenzione di preghiera
-- Le intenzioni di tutti appaiono nella "Cappella comune"
-- Il piano gratuito di Supabase supporta fino a 50.000 righe e 500 MB
+## Poi in config.js inserisci URL e chiave anon da Settings → API
