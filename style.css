@@ -354,3 +354,52 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .int-btn:hover{opacity:1;background:var(--s2);}
 .int-done-btn:hover{color:#2D7A4F;}
 .int-del-btn:hover{color:var(--red);}
+
+/* ── Notes Preview (main page) ── */
+.notes-preview-viewall{font-size:0.72rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold-dim);text-decoration:none;transition:color 0.2s;}
+.notes-preview-viewall:hover{color:var(--gold);}
+.note-preview-list{display:flex;flex-direction:column;gap:0.5rem;}
+.note-preview-empty{font-family:var(--font-d);font-size:0.95rem;font-style:italic;color:var(--t3);padding:1rem 0;text-align:center;}
+.note-preview-card{background:var(--s);border:1px solid var(--br);border-radius:var(--r);overflow:hidden;transition:border-color var(--tr),box-shadow var(--tr);}
+.note-preview-card:hover{border-color:var(--bra);}
+.note-preview-header{display:flex;align-items:center;justify-content:space-between;padding:0.85rem 1.1rem;cursor:pointer;gap:0.75rem;}
+.note-preview-title{font-family:var(--font-d);font-size:0.97rem;font-weight:500;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;}
+.note-preview-date{font-size:0.68rem;color:var(--t3);white-space:nowrap;flex-shrink:0;}
+.note-preview-toggle{background:none;border:none;width:24px;height:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:0;}
+.note-preview-toggle-icon{display:block;width:10px;height:10px;position:relative;}
+.note-preview-toggle-icon::before,.note-preview-toggle-icon::after{content:'';position:absolute;width:6px;height:1.5px;background:var(--t3);top:50%;border-radius:2px;transition:transform 0.2s;}
+.note-preview-toggle-icon::before{left:0;transform:translateY(-50%) rotate(45deg);}
+.note-preview-toggle-icon::after{right:0;transform:translateY(-50%) rotate(-45deg);}
+.note-preview-card.expanded .note-preview-toggle-icon::before{transform:translateY(-50%) rotate(-45deg);}
+.note-preview-card.expanded .note-preview-toggle-icon::after{transform:translateY(-50%) rotate(45deg);}
+.note-preview-body{padding:0 1.1rem 1rem;border-top:1px solid var(--br);}
+.note-preview-text{font-family:var(--font-d);font-size:0.93rem;font-weight:300;line-height:1.7;color:var(--t2);margin-top:0.75rem;}
+
+/* ── Streak bar hidden by default (shown only when logged in) ── */
+.streak-bar{display:none;}
+.streak-wrap{max-width:720px;margin:0 auto;padding:1.5rem 1.25rem 0.5rem;}
+.streak-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.6rem;}
+.streak-label{font-size:0.65rem;font-weight:600;letter-spacing:0.2em;text-transform:uppercase;color:var(--t3);}
+.streak-count{font-size:0.7rem;font-weight:600;color:var(--gold);letter-spacing:0.06em;}
+.streak-scroll{overflow-x:auto;padding-bottom:0.5rem;scrollbar-width:none;}
+.streak-scroll::-webkit-scrollbar{display:none;}
+.streak-dots{display:flex;gap:3px;width:max-content;}
+.streak-dot{width:8px;height:8px;border-radius:2px;background:var(--s2);flex-shrink:0;transition:background 0.2s;}
+.streak-dot.visited{background:var(--gold-dim);}
+.streak-dot.today{background:var(--gold);box-shadow:0 0 6px var(--gold-glow);}
+
+/* ── Esaudita badge ── */
+.int-esaudita{display:inline-block;font-size:0.62rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#2D7A4F;background:rgba(45,122,79,0.12);padding:0.1rem 0.45rem;border-radius:50px;margin-left:0.35rem;}
+
+/* ── Buttons ── */
+.btn-primary{padding:0.55rem 1.4rem;background:var(--gold);border:none;border-radius:50px;font-family:var(--font-b);font-size:0.85rem;font-weight:600;color:#0C0E0D;cursor:pointer;transition:opacity var(--tr);}
+.btn-primary:hover{opacity:0.85;}
+.btn-primary:disabled{opacity:0.5;cursor:default;}
+.btn-outline{padding:0.5rem 1.2rem;background:transparent;border:1px solid var(--bra);border-radius:50px;font-family:var(--font-b);font-size:0.82rem;font-weight:600;color:var(--gold);cursor:pointer;transition:var(--tr);}
+.btn-outline:hover{background:var(--gold-glow);}
+.btn-danger{padding:0.5rem 1.2rem;background:transparent;border:1px solid rgba(196,64,90,0.4);border-radius:50px;font-family:var(--font-b);font-size:0.82rem;font-weight:600;color:var(--red);cursor:pointer;transition:var(--tr);}
+.btn-danger:hover{background:var(--red-dim);}
+.btn-icon-sm{padding:0.38rem 0.9rem;background:transparent;border:1px solid var(--bra);border-radius:50px;font-family:var(--font-b);font-size:0.72rem;font-weight:600;color:var(--gold);cursor:pointer;transition:var(--tr);}
+.btn-icon-sm:hover{background:var(--gold-glow);}
+.btn-ghost-sm{border-color:var(--br);color:var(--t3);}
+.btn-ghost-sm:hover{border-color:var(--br);color:var(--t2);background:var(--s2);}
