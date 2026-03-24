@@ -1,4 +1,4 @@
-/* Don Luigi Giussani — citazioni quotidiane (63 totali) */
+/* Don Luigi Giussani — citazioni quotidiane (63 totali) */ 
 var GIUSSANI = [
   {
     "text": "La cosa più grande che può accadere all'uomo è che Qualcuno di divino lo ami e si faccia trovare da lui. Non è l'uomo che va a Dio, ma Dio che viene all'uomo. La fede cristiana non è un sistema di idee da credere, né un codice morale da seguire: è l'incontro con una Presenza, con Qualcuno che è entrato nella storia ed è ancora qui, vivente, identificabile, incontrabile.",
