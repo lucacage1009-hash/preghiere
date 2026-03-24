@@ -123,6 +123,7 @@ async function loadAllUserData() {
     loadStreakFromCloud(),
     loadNotesPreview()
   ]);
+  recordVisit(); /* Register today's visit before rendering */
   renderIntentions();
   renderPrayers();
   renderStreak();
@@ -489,8 +490,6 @@ function renderStreak(){
   var sc=bar.querySelector('#ss');if(sc)setTimeout(function(){sc.scrollLeft=sc.scrollWidth;},50);
 }
 
-/* Buttons */
-var btnPrimary=document.querySelectorAll('.btn-primary,.btn-outline,.btn-danger,.btn-icon-sm,.btn-ghost-sm');
 /* Render on load */
 document.addEventListener('DOMContentLoaded',function(){
   renderPrayers();
