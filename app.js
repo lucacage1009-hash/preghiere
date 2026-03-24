@@ -104,7 +104,7 @@ function updateAuthUI() {
     personalSections.forEach(function(s){s.style.display='';});
     if(loginPrompt) loginPrompt.classList.add('hidden');
     prayerControls.forEach(function(b){b.style.display='';});
-    if(streakBar) streakBar.style.display='';
+    if(streakBar) streakBar.style.display='block';
   } else {
     btn.classList.remove('logged-in');
     lbl.textContent = 'Accedi';
