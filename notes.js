@@ -13,9 +13,20 @@ if(themeBtn) themeBtn.addEventListener('click', function(){
 var SUPA=null, currentUser=null, allNotes=[], currentNoteId=null, currentSort='updated';
 
 function initSupabase(){
-  if(typeof SUPABASE_URL==='undefined'||!SUPABASE_URL||SUPABASE_URL.length<10) return;
-  if(typeof supabase==='undefined') return;
-  SUPA=supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  if(typeof SUPABASE_URL==='undefined'||!SUPABASE_URL||SUPABASE_URL.length<10) {
+    console.warn('AMDG: SUPABASE_URL non configurato in config.js');
+    return;
+  }
+  if(typeof supabase==='undefined') {
+    console.error('AMDG: libreria supabase-js non caricata');
+    return;
+  }
+  try {
+    SUPA=supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  } catch(e) {
+    console.error('AMDG: errore createClient Supabase (chiave non valida?):', e);
+    return;
+  }
 
   /* Immediately check existing session */
   SUPA.auth.getSession().then(function(res){
@@ -23,7 +34,7 @@ function initSupabase(){
     updateAuthUI();
     if(currentUser) loadNotes();
     else showLoginPrompt();
-  });
+  }).catch(function(e){ console.error('AMDG: getSession error:', e); });
 
   SUPA.auth.onAuthStateChange(function(event,session){
     currentUser=session?session.user:null;
