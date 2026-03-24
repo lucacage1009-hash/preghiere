@@ -4,7 +4,7 @@
    cross-device. Senza questo, tutto funziona
    solo in locale sul dispositivo.
 
-   SETUP (10 minuti): 
+   SETUP (10 minuti):  
    1. Vai su https://supabase.com → crea account gratuito
    2. "New project" → dai un nome → crea
    3. SQL Editor → incolla ed esegui il SQL in SETUP.md
