@@ -117,7 +117,13 @@ async function loadNotes(){
     showEmptyState();
     hideLoginPrompt();
   }catch(e){
-    showSidebarError();
+    console.error('loadNotes error:',e);
+    var msg='Errore nel caricamento.';
+    if(e&&e.message){
+      if(e.message.includes('relation')||e.message.includes('does not exist')) msg='Tabella non trovata: esegui il SQL di setup in Supabase.';
+      else if(e.message.includes('JWT')||e.message.includes('auth')) msg='Sessione scaduta. Riaccedi.';
+    }
+    showSidebarError(msg);
   }
 }
 
@@ -135,9 +141,9 @@ function showSidebarLoading(){
   var sl=document.getElementById('notes-list-sidebar');
   if(sl)sl.innerHTML='<p style="padding:1rem;font-size:0.82rem;color:var(--t3);font-style:italic;text-align:center;">Caricamento\u2026</p>';
 }
-function showSidebarError(){
+function showSidebarError(msg){
   var sl=document.getElementById('notes-list-sidebar');
-  if(sl)sl.innerHTML='<p style="padding:1rem;font-size:0.82rem;color:var(--red);font-style:italic;">Errore nel caricamento.</p>';
+  if(sl)sl.innerHTML='<p style="padding:1rem;font-size:0.82rem;color:var(--red);font-style:italic;">'+(msg||'Errore nel caricamento.')+'</p>';
 }
 
 function renderSidebar(){
@@ -239,7 +245,10 @@ var isSaving=false;
 
 async function saveCurrentNote(){
   if(!currentUser){openAuth();return;}
-  if(!SUPA){return;}
+  if(!SUPA){
+    if(saveStatus){saveStatus.textContent='Sincronizzazione non disponibile.';setTimeout(function(){saveStatus.textContent='';},3000);}
+    return;
+  }
   if(isSaving)return;
   var ti=document.getElementById('notes-title-input'),ce=document.getElementById('notes-content-editor');
   if(!ti||!ce)return;
@@ -282,8 +291,15 @@ async function saveCurrentNote(){
     }
     updateEditorMeta(now);
   } catch(err){
-    if(saveStatus) saveStatus.textContent='Errore nel salvataggio.';
     console.error('Save error:', err);
+    var msg='Errore nel salvataggio.';
+    if(err&&err.message){
+      if(err.message.includes('relation') || err.message.includes('does not exist')) msg='Tabella non trovata: esegui il SQL di setup in Supabase.';
+      else if(err.message.includes('JWT') || err.message.includes('auth')) msg='Sessione scaduta. Riaccedi.';
+      else if(err.message.includes('permission') || err.message.includes('policy')) msg='Permesso negato. Controlla le policy RLS in Supabase.';
+      else msg='Errore: '+err.message;
+    }
+    if(saveStatus) saveStatus.textContent=msg;
   }
   isSaving=false;
 }
