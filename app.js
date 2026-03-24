@@ -44,6 +44,8 @@ document.addEventListener('DOMContentLoaded', loadGiussani);
 
 /* ── Supabase ── */
 var SUPA = null, currentUser = null;
+window._cloudIntentions = [];
+window._cloudNotes = [];
 
 function initSupabase() {
   if(typeof SUPABASE_URL==='undefined'||!SUPABASE_URL||SUPABASE_URL.length<10) return;
@@ -345,9 +347,12 @@ async function loadIntentionsFromCloud(){
   if(!SUPA||!currentUser)return;
   try{
     var r=await SUPA.from('intentions').select('*').eq('user_id',currentUser.id).order('created_at',{ascending:false});
-    if(r.data) window._cloudIntentions=r.data;
-    else window._cloudIntentions=[];
-  }catch(e){window._cloudIntentions=[];}
+    if(r.error)throw r.error;
+    window._cloudIntentions=r.data||[];
+  }catch(e){
+    console.error('loadIntentions error:',e);
+    window._cloudIntentions=[];
+  }
 }
 function getInts(){return window._cloudIntentions||[];}
 
@@ -370,10 +375,12 @@ function renderIntentions(){
       var arr=getInts();
       var foundIdx=arr.findIndex(function(i){return i.id===id;});
       if(foundIdx>=0){
-        arr[foundIdx].done=!arr[foundIdx].done;
+        var newDone=!arr[foundIdx].done;
+        arr[foundIdx].done=newDone;
         window._cloudIntentions=arr;
         if(SUPA&&currentUser){
-          try{await SUPA.from('intentions').update({done:arr[foundIdx].done}).eq('id',id).eq('user_id',currentUser.id);}catch(e){}
+          var r=await SUPA.from('intentions').update({done:newDone}).eq('id',id).eq('user_id',currentUser.id);
+          if(r.error)console.error('toggle done error:',r.error);
         }
         renderIntentions();
       }
@@ -385,33 +392,46 @@ function renderIntentions(){
       if(!confirm('Eliminare questa intenzione?'))return;
       var id=btn.dataset.id;
       window._cloudIntentions=getInts().filter(function(i){return i.id!==id;});
-      if(SUPA&&currentUser){
-        try{await SUPA.from('intentions').delete().eq('id',id).eq('user_id',currentUser.id);}catch(e){}
-      }
       renderIntentions();
+      if(SUPA&&currentUser){
+        var r=await SUPA.from('intentions').delete().eq('id',id).eq('user_id',currentUser.id);
+        if(r.error)console.error('delete intention error:',r.error);
+      }
     });
   });
 }
 
 var intInput=document.getElementById('int-input'),intChars=document.getElementById('int-chars'),intAddBtn=document.getElementById('int-add-btn');
 if(intInput&&intChars)intInput.addEventListener('input',function(){intChars.textContent=intInput.value.length;});
+
+function showIntError(msg){var e=document.getElementById('int-error');if(e){e.textContent=msg;e.classList.remove('hidden');}}
+function hideIntError(){var e=document.getElementById('int-error');if(e)e.classList.add('hidden');}
+
 if(intAddBtn)intAddBtn.addEventListener('click',async function(){
   if(!currentUser){openAuth();return;}
-  var text=(intInput?intInput.value:'').trim();if(!text)return;
-  if(SUPA&&currentUser){
-    try{
-      var r=await SUPA.from('intentions').insert({user_id:currentUser.id,text:text.slice(0,500),done:false}).select().single();
-      if(r.data){window._cloudIntentions=[r.data].concat(getInts());}
-    }catch(e){}
+  var text=(intInput?intInput.value:'').trim();
+  if(!text)return;
+  if(!SUPA){showIntError('Sincronizzazione non disponibile. Configura Supabase in config.js.');return;}
+  hideIntError();
+  intAddBtn.disabled=true;
+  intAddBtn.textContent='…';
+  try{
+    var r=await SUPA.from('intentions').insert({user_id:currentUser.id,text:text.slice(0,500),done:false}).select().single();
+    if(r.error)throw r.error;
+    window._cloudIntentions=[r.data].concat(getInts());
+    if(intInput){intInput.value='';if(intChars)intChars.textContent='0';}
+    renderIntentions();
+  }catch(e){
+    console.error('intentions insert error:',e);
+    showIntError('Errore nel salvataggio: '+(e.message||'riprova.'));
   }
-  if(intInput){intInput.value='';if(intChars)intChars.textContent='0';}
-  renderIntentions();
+  intAddBtn.disabled=false;
+  intAddBtn.textContent='Aggiungi';
 });
 if(intInput)intInput.addEventListener('keydown',function(e){if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)&&intAddBtn)intAddBtn.click();});
 document.addEventListener('DOMContentLoaded',function(){if(currentUser)renderIntentions();});
 
 /* ── Notes Preview (on main page) ── */
-window._cloudNotes = [];
 
 async function loadNotesPreview(){
   if(!SUPA||!currentUser)return;
