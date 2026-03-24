@@ -48,9 +48,20 @@ window._cloudIntentions = [];
 window._cloudNotes = [];
 
 function initSupabase() {
-  if(typeof SUPABASE_URL==='undefined'||!SUPABASE_URL||SUPABASE_URL.length<10) return;
-  if(typeof supabase==='undefined') return;
-  SUPA = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  if(typeof SUPABASE_URL==='undefined'||!SUPABASE_URL||SUPABASE_URL.length<10) {
+    console.warn('AMDG: SUPABASE_URL non configurato in config.js');
+    return;
+  }
+  if(typeof supabase==='undefined') {
+    console.error('AMDG: libreria supabase-js non caricata');
+    return;
+  }
+  try {
+    SUPA = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  } catch(e) {
+    console.error('AMDG: errore createClient Supabase (chiave non valida?):', e);
+    return;
+  }
 
   /* Get current session immediately on load */
   SUPA.auth.getSession().then(function(res) {
@@ -59,7 +70,7 @@ function initSupabase() {
     if(currentUser) {
       loadAllUserData();
     }
-  });
+  }).catch(function(e){ console.error('AMDG: getSession error:', e); });
 
   SUPA.auth.onAuthStateChange(function(event, session) {
     currentUser = session ? session.user : null;
@@ -268,22 +279,37 @@ document.addEventListener('DOMContentLoaded',function(){loadGospel(currentRite);
 /* ── Prayers ── */
 var PRAYER_KEY='amdg_prayers_v3';
 function getPrayers(){
-  /* When logged in, prefer cloud-cached version */
+  /* 1) Logged in + cloud loaded → use cloud */
   if(currentUser && window._cloudPrayers) return JSON.parse(JSON.stringify(window._cloudPrayers));
+  /* 2) Fallback: localStorage (works offline and before cloud loads) */
+  try { var stored=localStorage.getItem(PRAYER_KEY); if(stored){var p=JSON.parse(stored);if(Array.isArray(p)&&p.length)return p;} } catch(e){}
+  /* 3) Absolute fallback: built-in defaults */
   return JSON.parse(JSON.stringify(DEFAULT_PRAYERS));
 }
-function savePrayersLocal(a){ if(currentUser) localStorage.setItem(PRAYER_KEY,JSON.stringify(a)); }
+/* BUG FIX: always save to localStorage, not only when logged in */
+function savePrayersLocal(a){ try{localStorage.setItem(PRAYER_KEY,JSON.stringify(a));}catch(e){} }
 async function loadPrayersFromCloud(){
   if(!SUPA||!currentUser)return;
   try{
     var r=await SUPA.from('settings').select('prayers').eq('user_id',currentUser.id).single();
-    if(r.data&&r.data.prayers){ window._cloudPrayers=r.data.prayers; localStorage.setItem(PRAYER_KEY,JSON.stringify(r.data.prayers)); }
-  }catch(e){}
+    if(r.error){
+      /* PGRST116 = nessuna riga trovata: normale per nuovi utenti, non è un errore */
+      if(r.error.code!=='PGRST116') console.error('AMDG: loadPrayers error:', r.error);
+      return;
+    }
+    if(r.data&&r.data.prayers){
+      window._cloudPrayers=r.data.prayers;
+      localStorage.setItem(PRAYER_KEY,JSON.stringify(r.data.prayers));
+    }
+  }catch(e){ console.error('AMDG: loadPrayers exception:', e); }
 }
 async function savePrayersToCloud(a){
   if(!SUPA||!currentUser)return;
   window._cloudPrayers=a;
-  try{await SUPA.from('settings').upsert({user_id:currentUser.id,prayers:a},{onConflict:'user_id'});}catch(e){}
+  try{
+    var r=await SUPA.from('settings').upsert({user_id:currentUser.id,prayers:a},{onConflict:'user_id'});
+    if(r.error) console.error('AMDG: savePrayers error:', r.error);
+  }catch(e){ console.error('AMDG: savePrayers exception:', e); }
 }
 function makeAngelusBody(){
   return '<div class="angelus-grid"><div class="angelus-col"><span class="lang-badge">Italiano</span><div class="angelus-verses"><p><span class="verse-v">V.</span> L\u2019Angelo del Signore port\u00f2 l\u2019annunzio a Maria</p><p><span class="verse-r">R.</span> Ed ella concep\u00ec per opera dello Spirito Santo.</p><p class="verse-italic">Ave Maria\u2026</p><p><span class="verse-v">V.</span> Eccomi, sono la serva del Signore.</p><p><span class="verse-r">R.</span> Si compia in me la tua parola.</p><p class="verse-italic">Ave Maria\u2026</p><p><span class="verse-v">V.</span> E il Verbo si fece carne.</p><p><span class="verse-r">R.</span> E venne ad abitare in mezzo a noi.</p><p class="verse-italic">Ave Maria\u2026</p><p><span class="verse-v">V.</span> Prega per noi, santa Madre di Dio.</p><p><span class="verse-r">R.</span> Perch\u00e9 siamo resi degni delle promesse di Cristo.</p><p class="verse-prayer">Preghiamo. Infondi nel nostro spirito la Tua grazia, o Padre; Tu, che nell\u2019annunzio dell\u2019angelo ci hai rivelato l\u2019incarnazione del Tuo Figlio, per la Sua passione e la Sua croce guidaci alla gloria della risurrezione. Per Cristo nostro Signore.</p><p class="amen">Amen.</p></div></div><div class="angelus-divider"></div><div class="angelus-col"><span class="lang-badge lang-badge--de">Deutsch</span><div class="angelus-verses"><p><span class="verse-v">V.</span> Der Engel des Herrn brachte Maria die Botschaft, und sie empfing vom Heiligen Geist.</p><p><span class="verse-r">R.</span> Gegr\u00fc\u00dfet seist du, Maria\u2026</p><p><span class="verse-v">V.</span> Maria sprach: Siehe, ich bin eine Magd des Herrn, mir geschehe nach Deinem Wort.</p><p><span class="verse-r">R.</span> Gegr\u00fc\u00dfet seist du, Maria\u2026</p><p><span class="verse-v">V.</span> Und das Wort ist Fleisch geworden und hat unter uns gewohnt.</p><p><span class="verse-r">R.</span> Gegr\u00fc\u00dfet seist du, Maria\u2026</p><p><span class="verse-v">V.</span> Bitte f\u00fcr uns, o heilige Gottsgeb\u00e4rerin,</p><p><span class="verse-r">R.</span> auf dass wir w\u00fcrdig werden der Verhe\u00dfungen Christi.</p><p class="verse-prayer">Lasset uns beten: Allm\u00e4chtiger Gott, gie\u00dfe deine Gnade in unsere Herzen ein. Durch die Botschaft des Engels haben wir die Menschwerdung Christi, deines Sohnes, erkannt. Lass uns durch sein Leiden und Kreuz zur Herrlichkeit der Auferstehung gelangen. Darum bitten wir durch Christus, unseren Herrn.</p><p class="amen">Amen.</p></div></div></div>';
@@ -347,10 +373,10 @@ async function loadIntentionsFromCloud(){
   if(!SUPA||!currentUser)return;
   try{
     var r=await SUPA.from('intentions').select('*').eq('user_id',currentUser.id).order('created_at',{ascending:false});
-    if(r.error)throw r.error;
+    if(r.error){console.error('AMDG: loadIntentions error:', r.error);throw r.error;}
     window._cloudIntentions=r.data||[];
   }catch(e){
-    console.error('loadIntentions error:',e);
+    console.error('AMDG: loadIntentions exception:', e);
     window._cloudIntentions=[];
   }
 }
@@ -479,15 +505,19 @@ async function loadStreakFromCloud(){
   if(!SUPA||!currentUser)return;
   try{
     var r=await SUPA.from('streak').select('visits').eq('user_id',currentUser.id).single();
+    if(r.error&&r.error.code!=='PGRST116'){console.error('AMDG: loadStreak error:',r.error);return;}
     if(r.data&&r.data.visits){
       var merged=Array.from(new Set([].concat(getVisits(),r.data.visits)));
       saveVisitsLocal(merged,currentUser.id);
     }
-  }catch(e){}
+  }catch(e){ console.error('AMDG: loadStreak exception:',e); }
 }
 async function saveStreakToCloud(a){
   if(!SUPA||!currentUser)return;
-  try{await SUPA.from('streak').upsert({user_id:currentUser.id,visits:a},{onConflict:'user_id'});}catch(e){}
+  try{
+    var r=await SUPA.from('streak').upsert({user_id:currentUser.id,visits:a},{onConflict:'user_id'});
+    if(r.error) console.error('AMDG: saveStreak error:',r.error);
+  }catch(e){ console.error('AMDG: saveStreak exception:',e); }
 }
 function recordVisit(){
   if(!currentUser)return;
