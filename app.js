@@ -1,7 +1,15 @@
 /* AMDG app.js */
 'use strict';
 
-var DEFAULT_PRAYERS = [{"id": "mattino", "emoji": "\u2600", "tag": "Mattino", "name": "Guidami, Signore", "isDefault": true, "text": "Signore, guidami in questo nuovo giorno, perch\u00e9 io possa riconoscere e abbracciare ci\u00f2 che \u00e8 bene.\n\nAiutami a far s\u00ec che tutto il mio lavoro e lo studio siano efficaci strumenti per Te.\n\nPer intercessione di Carlo Acutis, non dimenticarti di questo tuo servo.\n\nAmen."}, {"id": "angelus", "emoji": "\ud83d\udd14", "tag": "Mezzogiorno", "name": "Angelus Domini", "isDefault": true, "text": "SPECIAL"}, {"id": "tentazione", "emoji": "\u2694", "tag": "Tentazione", "name": "Coraggio e Forza", "isDefault": true, "text": "Signore Ges\u00f9, donami coraggio e forza. Aiutami a riconoscere ci\u00f2 che \u00e8 veramente bene.\n\nFa\u2019 che la mia fede si riveli e cresca.\n\nMaria, Madre potente, intercedi per me.\n\nAmen."}, {"id": "caduta", "emoji": "\ud83d\udd4a", "tag": "Dopo la Caduta", "name": "Rialzami, Signore", "isDefault": true, "text": "Signore, tu hai visto la mia lotta e sai che non volevo cadere, eppure sono caduto.\n\nPerdonami. Rialzami ancora una volta. Non lasciare che la mia caduta diventi disperazione.\n\nInsegnami a ricominciare con pi\u00f9 umilt\u00e0 e pi\u00f9 fiducia nella Tua grazia.\n\nAmen."}, {"id": "inizio", "emoji": "\u270f", "tag": "Prima di un Impegno", "name": "Tutto a Te", "isDefault": true, "text": "Ges\u00f9, mentre inizio ci\u00f2 che mi accingi a farmi vivere, ti affido tutto me stesso.\n\nIllumina i miei pensieri, fa\u2019 che ogni mio sforzo diventi strumento per Te.\n\nAmen."}, {"id": "maria", "emoji": "\ud83c\udf39", "tag": "Mariana", "name": "Santa Maria, Madre di Dio", "isDefault": true, "text": "Santa Maria, Madre di Dio, tu che mai trascuri chi ti chiama, rendimi saldo nella fede.\n\nGuida i miei passi, rafforza la mia volont\u00e0, rendimi capace di compiere il bene.\n\nAmen."}, {"id": "sera", "emoji": "\ud83c\udf19", "tag": "Sera", "name": "Ti Adoro, Mio Dio", "isDefault": true, "text": "Ti adoro mio Dio e ti amo con tutto il cuore, ti ringrazio di avermi creato fatto cristiano e conservato in questo giorno, perdonami il male oggi commesso e se qualche bene ho compiuto accettalo custodiscimi nel riposo e liberami dai pericoli la grazia tua sia sempre con me e con tutti i miei cari.\n\nAmen."}];
+var DEFAULT_PRAYERS = [
+  {"id":"mattino","emoji":"\u2600","tag":"Mattino","name":"Guidami, Signore","isDefault":true,"text":"Signore, guidami in questo nuovo giorno, perch\u00e9 io possa riconoscere e abbracciare ci\u00f2 che \u00e8 bene e sconfiggere ci\u00f2 che \u00e8 male e le tentazioni che incontrer\u00f2.\n\nAiutami a far s\u00ec che tutto il mio lavoro e lo studio siano efficaci strumenti per Te, e manda lo Spirito Santo su di me per consigliarmi e guidarmi in ogni cosa.\n\nPer intercessione di Carlo Acutis, non dimenticarti di questo tuo servo.\n\nAmen."},
+  {"id":"angelus","emoji":"\ud83d\udd14","tag":"Mezzogiorno","name":"Angelus Domini","isDefault":true,"text":"SPECIAL"},
+  {"id":"tentazione","emoji":"\u2694","tag":"Tentazione","name":"Coraggio e Forza","isDefault":true,"text":"Signore Ges\u00f9, donami coraggio e forza in questo momento di tentazione. Aiutami a riconoscere ci\u00f2 che \u00e8 veramente bene e a non distrarmi n\u00e9 cedere a compromessi ingannevoli.\n\nFa\u2019 che sia in questi attimi, quando tutto sembra vacillare, che la mia fede si riveli e cresca.\n\nMaria, Madre potente, intercedi per me e proteggimi dal peccato.\n\nAmen."},
+  {"id":"caduta","emoji":"\ud83d\udd4a","tag":"Dopo la Caduta","name":"Rialzami, Signore","isDefault":true,"text":"Signore, tu hai visto la mia lotta e sai che non volevo cadere, eppure sono caduto. Il mio cuore \u00e8 confuso e mi sento debole, ma non voglio allontanarmi da Te proprio adesso.\n\nPerdonami, Signore. Rialzami ancora una volta. Non lasciare che la mia caduta diventi disperazione o che il nemico mi convinca che ormai \u00e8 tutto perduto.\n\nTu conosci la mia fragilit\u00e0 meglio di me: insegnami a ricominciare con pi\u00f9 umilt\u00e0, con pi\u00f9 vigilanza e con pi\u00f9 fiducia nella Tua grazia.\n\nRimettimi in piedi, Signore, e guidami di nuovo sulla Tua strada.\n\nAmen."},
+  {"id":"inizio","emoji":"\u270f","tag":"Prima di un Impegno","name":"Tutto a Te","isDefault":true,"text":"Ges\u00f9, mentre inizio ci\u00f2 che mi accingi a farmi vivere, ti affido tutto me stesso. Guidami affinch\u00e9 tutto ci\u00f2 che faccio possa servirTi davvero.\n\nIllumina i miei pensieri e guidami nelle scelte, fa\u2019 che ogni mio sforzo diventi strumento per Te.\n\nAmen."},
+  {"id":"maria","emoji":"\ud83c\udf39","tag":"Mariana","name":"Santa Maria, Madre di Dio","isDefault":true,"text":"Santa Maria, Madre di Dio, tu che mai trascuri chi ti chiama, rendimi saldo nella fede e pronto al servizio di Dio. Fa\u2019 che la mia vita sia uno strumento nelle mani di Dio.\n\nIn questo momento affido a te i miei pensieri e desideri. Guida i miei passi, rafforza la mia volont\u00e0, e rendimi capace di compiere il bene che vuoi. Mantienimi saldo nelle prove, fai brillare la tua luce dove c\u2019\u00e8 oscurit\u00e0, e insegnami a camminare con coraggio sulla via della fede.\n\nAmen."},
+  {"id":"sera","emoji":"\ud83c\udf19","tag":"Sera","name":"Ti Adoro, Mio Dio","isDefault":true,"text":"Ti adoro mio Dio e ti amo con tutto il cuore, ti ringrazio di avermi creato fatto cristiano e conservato in questo giorno, perdonami il male oggi commesso e se qualche bene ho compiuto accettalo custodiscimi nel riposo e liberami dai pericoli la grazia tua sia sempre con me e con tutti i miei cari.\n\nAmen."}
+];
 
 /* ── Helpers ── */
 var html = document.documentElement;
@@ -41,8 +49,17 @@ function initSupabase() {
   if(typeof SUPABASE_URL==='undefined'||!SUPABASE_URL||SUPABASE_URL.length<10) return;
   if(typeof supabase==='undefined') return;
   SUPA = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  /* Get current session immediately on load */
+  SUPA.auth.getSession().then(function(res) {
+    currentUser = (res.data && res.data.session) ? res.data.session.user : null;
+    updateAuthUI();
+    if(currentUser) {
+      loadAllUserData();
+    }
+  });
+
   SUPA.auth.onAuthStateChange(function(event, session) {
-    var wasLoggedIn = !!currentUser;
     currentUser = session ? session.user : null;
     updateAuthUI();
     if(currentUser) {
@@ -54,49 +71,62 @@ function initSupabase() {
 }
 initSupabase();
 
-/* Username -> fake email conversion so no real email needed */
 function toEmail(username) { return username.trim().toLowerCase() + '@amdg.app'; }
 
 function updateAuthUI() {
   var btn=document.getElementById('auth-btn'), lbl=document.getElementById('auth-btn-label');
   var notesBtn=document.getElementById('notes-btn');
   if(!btn||!lbl) return;
+
+  /* Personal sections */
+  var personalSections = document.querySelectorAll('.personal-section');
+  var loginPrompt = document.getElementById('login-prompt');
+  var prayerControls = document.querySelectorAll('.prayer-edit-btn, #add-prayer-btn, #reset-prayers-btn');
+  var streakBar = document.getElementById('streak-bar');
+
   if(currentUser) {
     btn.classList.add('logged-in');
-    var username = (currentUser.email||'').replace('@amdg.app','');
-    lbl.textContent = username || 'Account';
+    lbl.textContent = (currentUser.email||'').replace('@amdg.app','') || 'Account';
     if(notesBtn) notesBtn.style.display='flex';
+    personalSections.forEach(function(s){s.style.display='';});
+    if(loginPrompt) loginPrompt.classList.add('hidden');
+    prayerControls.forEach(function(b){b.style.display='';});
+    if(streakBar) streakBar.style.display='';
   } else {
     btn.classList.remove('logged-in');
     lbl.textContent = 'Accedi';
     if(notesBtn) notesBtn.style.display='none';
-  }
-  /* Show/hide personal sections */
-  var personalSections = document.querySelectorAll('.personal-section');
-  var loginPrompt = document.getElementById('login-prompt');
-  if(currentUser) {
-    personalSections.forEach(function(s){s.style.display='';});
-    if(loginPrompt) loginPrompt.classList.add('hidden');
-  } else {
     personalSections.forEach(function(s){s.style.display='none';});
     if(loginPrompt) loginPrompt.classList.remove('hidden');
+    prayerControls.forEach(function(b){b.style.display='none';});
+    if(streakBar) streakBar.style.display='none';
   }
 }
 
 function showLoggedOutState() {
-  /* Clear all personal data from UI */
+  window._cloudIntentions = [];
+  window._cloudPrayers = null;
+  window._cloudNotes = [];
   var intList=document.getElementById('int-list');
-  var intEmpty=document.getElementById('int-empty');
   if(intList) intList.innerHTML='';
-  if(intEmpty) intEmpty.classList.remove('hidden');
+  var notePreviewList = document.getElementById('note-preview-list');
+  if(notePreviewList) notePreviewList.innerHTML='';
+  renderPrayers();
+  renderStreak();
   updateAuthUI();
 }
 
 async function loadAllUserData() {
-  await Promise.all([loadIntentionsFromCloud(), loadStreakFromCloud(), loadPrayersFromCloud()]);
+  await Promise.all([
+    loadIntentionsFromCloud(),
+    loadPrayersFromCloud(),
+    loadStreakFromCloud(),
+    loadNotesPreview()
+  ]);
   renderIntentions();
   renderPrayers();
   renderStreak();
+  renderNotesPreview();
 }
 
 /* ── Auth Modal ── */
@@ -150,10 +180,9 @@ if(authForm) authForm.addEventListener('submit', async function(e) {
     if(isRegister) {
       result = await SUPA.auth.signUp({email:email, password:pw, options:{emailRedirectTo:null, data:{username:username}}});
       if(result.error) throw result.error;
-      /* Auto-confirm: try to sign in immediately */
       var signIn = await SUPA.auth.signInWithPassword({email:email, password:pw});
       if(signIn.error) {
-        showAuthErr('Account creato! Prova ad accedere con le stesse credenziali.');
+        showAuthErr('Account creato! Ora accedi con le stesse credenziali.');
         sub.disabled=false; sub.textContent='Crea Account'; return;
       }
     } else {
@@ -235,14 +264,22 @@ document.addEventListener('DOMContentLoaded',function(){loadGospel(currentRite);
 
 /* ── Prayers ── */
 var PRAYER_KEY='amdg_prayers_v3';
-function getPrayers(){try{var s=localStorage.getItem(PRAYER_KEY);if(s){var a=JSON.parse(s);if(a&&a.length>0)return a;}}catch(e){}return JSON.parse(JSON.stringify(DEFAULT_PRAYERS));}
-function savePrayersLocal(a){localStorage.setItem(PRAYER_KEY,JSON.stringify(a));}
+function getPrayers(){
+  /* When logged in, prefer cloud-cached version */
+  if(currentUser && window._cloudPrayers) return JSON.parse(JSON.stringify(window._cloudPrayers));
+  return JSON.parse(JSON.stringify(DEFAULT_PRAYERS));
+}
+function savePrayersLocal(a){ if(currentUser) localStorage.setItem(PRAYER_KEY,JSON.stringify(a)); }
 async function loadPrayersFromCloud(){
   if(!SUPA||!currentUser)return;
-  try{var r=await SUPA.from('settings').select('prayers').eq('user_id',currentUser.id).single();if(r.data&&r.data.prayers)localStorage.setItem(PRAYER_KEY,JSON.stringify(r.data.prayers));}catch(e){}
+  try{
+    var r=await SUPA.from('settings').select('prayers').eq('user_id',currentUser.id).single();
+    if(r.data&&r.data.prayers){ window._cloudPrayers=r.data.prayers; localStorage.setItem(PRAYER_KEY,JSON.stringify(r.data.prayers)); }
+  }catch(e){}
 }
 async function savePrayersToCloud(a){
   if(!SUPA||!currentUser)return;
+  window._cloudPrayers=a;
   try{await SUPA.from('settings').upsert({user_id:currentUser.id,prayers:a},{onConflict:'user_id'});}catch(e){}
 }
 function makeAngelusBody(){
@@ -250,69 +287,109 @@ function makeAngelusBody(){
 }
 function makePrayerBody(p){
   if(p.id==='angelus')return makeAngelusBody();
-  var html='';
+  var out='';
   p.text.split('\n').filter(function(l){return l.trim();}).forEach(function(line){
-    if(line.trim()==='Amen.'||line.trim()==='Amen')html+='<p class="amen">Amen.</p>';
-    else html+='<p>'+line.replace(/</g,'&lt;')+'</p>';
+    if(line.trim()==='Amen.'||line.trim()==='Amen')out+='<p class="amen">Amen.</p>';
+    else out+='<p>'+line.replace(/</g,'&lt;')+'</p>';
   });
-  return html;
+  return out;
 }
 function renderPrayers(){
   var list=document.getElementById('prayers-list');if(!list)return;
   var prayers=getPrayers();list.innerHTML='';
+  var loggedIn=!!currentUser;
   prayers.forEach(function(p,idx){
     var item=document.createElement('div');item.className='prayer-item';
-    item.innerHTML='<div class="prayer-toggle-row"><button class="prayer-toggle" aria-expanded="false"><span class="prayer-icon">'+p.emoji+'</span><span class="prayer-info"><span class="prayer-tag">'+p.tag+'</span><span class="prayer-name">'+p.name+'</span></span><span class="prayer-chevron" aria-hidden="true"></span></button><button class="prayer-edit-btn" data-idx="'+idx+'" title="Modifica">\u270f</button></div><div class="prayer-body hidden">'+makePrayerBody(p)+'</div>';
+    var editBtn=loggedIn?'<button class="prayer-edit-btn" data-idx="'+idx+'" title="Modifica">\u270f</button>':'';
+    item.innerHTML='<div class="prayer-toggle-row"><button class="prayer-toggle" aria-expanded="false"><span class="prayer-icon">'+p.emoji+'</span><span class="prayer-info"><span class="prayer-tag">'+p.tag+'</span><span class="prayer-name">'+p.name+'</span></span><span class="prayer-chevron" aria-hidden="true"></span></button>'+editBtn+'</div><div class="prayer-body hidden">'+makePrayerBody(p)+'</div>';
     list.appendChild(item);
     var toggle=item.querySelector('.prayer-toggle'),body=item.querySelector('.prayer-body');
     toggle.addEventListener('click',function(){var isOpen=toggle.getAttribute('aria-expanded')==='true';list.querySelectorAll('.prayer-item').forEach(function(i){if(i!==item){i.classList.remove('open');var t=i.querySelector('.prayer-toggle'),b=i.querySelector('.prayer-body');if(t)t.setAttribute('aria-expanded','false');if(b)b.classList.add('hidden');}});toggle.setAttribute('aria-expanded',isOpen?'false':'true');body.classList.toggle('hidden',isOpen);item.classList.toggle('open',!isOpen);});
-    item.querySelector('.prayer-edit-btn').addEventListener('click',function(){openPE(idx);});
+    if(loggedIn){
+      var editEl=item.querySelector('.prayer-edit-btn');
+      if(editEl)editEl.addEventListener('click',function(){openPE(idx);});
+    }
   });
+  /* Show/hide add & reset buttons based on login */
+  var addBtn=document.getElementById('add-prayer-btn'),resetBtn=document.getElementById('reset-prayers-btn');
+  if(addBtn)addBtn.style.display=loggedIn?'':'none';
+  if(resetBtn)resetBtn.style.display=loggedIn?'':'none';
 }
+
 var peOverlay=document.getElementById('pe-overlay'),peEditIdx=-1;
-function openPE(idx){peEditIdx=idx;var prayers=getPrayers();var p=idx>=0&&idx<prayers.length?prayers[idx]:null;document.getElementById('pe-title').textContent=p?'Modifica Preghiera':'Nuova Preghiera';document.getElementById('pe-emoji').value=p?p.emoji:'\u2728';document.getElementById('pe-tag').value=p?p.tag:'';document.getElementById('pe-name').value=p?p.name:'';document.getElementById('pe-text').value=p?(p.id==='angelus'?'(Angelus - testo fisso, non modificabile)':p.text):'';var del=document.getElementById('pe-delete');if(del)del.classList.toggle('hidden',!(p&&!p.isDefault));if(peOverlay)peOverlay.classList.remove('hidden');}
+function openPE(idx){peEditIdx=idx;var prayers=getPrayers();var p=idx>=0&&idx<prayers.length?prayers[idx]:null;document.getElementById('pe-title').textContent=p?'Modifica Preghiera':'Nuova Preghiera';document.getElementById('pe-emoji').value=p?p.emoji:'\u2728';document.getElementById('pe-tag').value=p?p.tag:'';document.getElementById('pe-name').value=p?p.name:'';document.getElementById('pe-text').value=p?(p.id==='angelus'?'(Angelus \u2014 testo fisso)':p.text):'';var del=document.getElementById('pe-delete');if(del)del.classList.toggle('hidden',!(p&&!p.isDefault));if(peOverlay)peOverlay.classList.remove('hidden');}
 function closePE(){if(peOverlay)peOverlay.classList.add('hidden');peEditIdx=-1;}
 var peClose=document.getElementById('pe-close'),peCancel=document.getElementById('pe-cancel');
 if(peClose)peClose.addEventListener('click',closePE);if(peCancel)peCancel.addEventListener('click',closePE);
 if(peOverlay)peOverlay.addEventListener('click',function(e){if(e.target===peOverlay)closePE();});
 var peForm=document.getElementById('pe-form');
-if(peForm)peForm.addEventListener('submit',function(e){e.preventDefault();var prayers=getPrayers();var nd={emoji:document.getElementById('pe-emoji').value||'\u2728',tag:document.getElementById('pe-tag').value,name:document.getElementById('pe-name').value,text:document.getElementById('pe-text').value};if(peEditIdx>=0&&peEditIdx<prayers.length)Object.assign(prayers[peEditIdx],nd);else prayers.push({id:'c'+Date.now(),...nd,isDefault:false});savePrayersLocal(prayers);savePrayersToCloud(prayers);renderPrayers();closePE();});
+if(peForm)peForm.addEventListener('submit',function(e){
+  e.preventDefault();
+  if(!currentUser){openAuth();return;}
+  var prayers=getPrayers();
+  var nd={emoji:document.getElementById('pe-emoji').value||'\u2728',tag:document.getElementById('pe-tag').value,name:document.getElementById('pe-name').value,text:document.getElementById('pe-text').value};
+  if(peEditIdx>=0&&peEditIdx<prayers.length)Object.assign(prayers[peEditIdx],nd);
+  else prayers.push({id:'c'+Date.now(),isDefault:false,emoji:nd.emoji,tag:nd.tag,name:nd.name,text:nd.text});
+  savePrayersLocal(prayers);savePrayersToCloud(prayers);renderPrayers();closePE();
+});
 var peDel=document.getElementById('pe-delete');
-if(peDel)peDel.addEventListener('click',function(){if(!confirm('Eliminare?'))return;var prayers=getPrayers();if(peEditIdx>=0)prayers.splice(peEditIdx,1);savePrayersLocal(prayers);savePrayersToCloud(prayers);renderPrayers();closePE();});
-var addPBtn=document.getElementById('add-prayer-btn');if(addPBtn)addPBtn.addEventListener('click',function(){openPE(-1);});
+if(peDel)peDel.addEventListener('click',function(){if(!confirm('Eliminare questa preghiera?'))return;var prayers=getPrayers();if(peEditIdx>=0)prayers.splice(peEditIdx,1);savePrayersLocal(prayers);savePrayersToCloud(prayers);renderPrayers();closePE();});
+var addPBtn=document.getElementById('add-prayer-btn');if(addPBtn)addPBtn.addEventListener('click',function(){if(!currentUser){openAuth();return;}openPE(-1);});
 var resetPBtn=document.getElementById('reset-prayers-btn');
-if(resetPBtn)resetPBtn.addEventListener('click',function(){if(!confirm('Ripristinare le preghiere predefinite?'))return;var def=JSON.parse(JSON.stringify(DEFAULT_PRAYERS));savePrayersLocal(def);savePrayersToCloud(def);renderPrayers();});
+if(resetPBtn)resetPBtn.addEventListener('click',function(){if(!currentUser){openAuth();return;}if(!confirm('Ripristinare le preghiere predefinite?'))return;var def=JSON.parse(JSON.stringify(DEFAULT_PRAYERS));savePrayersLocal(def);savePrayersToCloud(def);renderPrayers();});
 document.addEventListener('DOMContentLoaded',renderPrayers);
 
-/* ── Intentions (cloud only when logged in) ── */
+/* ── Intentions (cloud only, visible only when logged in) ── */
 async function loadIntentionsFromCloud(){
   if(!SUPA||!currentUser)return;
   try{
     var r=await SUPA.from('intentions').select('*').eq('user_id',currentUser.id).order('created_at',{ascending:false});
-    if(r.data)window._cloudIntentions=r.data;
-  }catch(e){}
+    if(r.data) window._cloudIntentions=r.data;
+    else window._cloudIntentions=[];
+  }catch(e){window._cloudIntentions=[];}
 }
 function getInts(){return window._cloudIntentions||[];}
 
 function renderIntentions(){
-  var list=document.getElementById('int-list'),empty=document.getElementById('int-empty');if(!list||!empty)return;
+  var list=document.getElementById('int-list'),empty=document.getElementById('int-empty');
+  if(!list||!empty)return;
   var arr=getInts();list.innerHTML='';
-  if(!arr.length){empty.classList.remove('hidden');return;}empty.classList.add('hidden');
-  arr.forEach(function(item,idx){
+  if(!arr.length){empty.classList.remove('hidden');return;}
+  empty.classList.add('hidden');
+  arr.forEach(function(item){
     var div=document.createElement('div');div.className='int-item'+(item.done?' int-done':'');
-    div.innerHTML='<div class="int-dot"></div><div class="int-body"><p class="int-text">'+item.text.replace(/</g,'&lt;')+'</p><p class="int-date">'+fmtDate(item.created_at)+(item.done?' \u2022 Esaudita':'')+'</p></div><div class="int-actions"><button class="int-btn int-done-btn" data-id="'+(item.id||idx)+'" title="'+(item.done?'Riapri':'Esaudita')+'">'+(item.done?'\u21b7':'\u2713')+'</button><button class="int-btn int-del-btn" data-id="'+(item.id||idx)+'" title="Elimina">\u00d7</button></div>';
+    var doneLabel=item.done?'\u2022 Esaudita \u2713':'';
+    div.innerHTML='<div class="int-dot"></div><div class="int-body"><p class="int-text">'+item.text.replace(/</g,'&lt;')+'</p><p class="int-date">'+fmtDate(item.created_at)+(doneLabel?' <span class="int-esaudita">'+doneLabel+'</span>':'')+'</p></div><div class="int-actions"><button class="int-btn int-done-btn" data-id="'+item.id+'" title="'+(item.done?'Riapri':'Segna come esaudita')+'">'+(item.done?'\u21b7':'\u2713')+'</button><button class="int-btn int-del-btn" data-id="'+item.id+'" title="Elimina">\u00d7</button></div>';
     list.appendChild(div);
   });
-  list.querySelectorAll('.int-done-btn').forEach(function(btn){btn.addEventListener('click',async function(){
-    var id=btn.dataset.id;var arr=getInts();var idx=arr.findIndex(function(i){return(i.id||String(idx))===id;});
-    if(idx>=0){arr[idx].done=!arr[idx].done;window._cloudIntentions=arr;if(SUPA&&currentUser){try{await SUPA.from('intentions').update({done:arr[idx].done}).eq('id',id).eq('user_id',currentUser.id);}catch(e){}}renderIntentions();}
-  });});
-  list.querySelectorAll('.int-del-btn').forEach(function(btn){btn.addEventListener('click',async function(){
-    if(!confirm('Eliminare?'))return;var id=btn.dataset.id;
-    window._cloudIntentions=(getInts()).filter(function(i){return(i.id||'')!==id;});
-    if(SUPA&&currentUser){try{await SUPA.from('intentions').delete().eq('id',id).eq('user_id',currentUser.id);}catch(e){}}
-    renderIntentions();
-  });});
+
+  list.querySelectorAll('.int-done-btn').forEach(function(btn){
+    btn.addEventListener('click',async function(){
+      var id=btn.dataset.id;
+      var arr=getInts();
+      var foundIdx=arr.findIndex(function(i){return i.id===id;});
+      if(foundIdx>=0){
+        arr[foundIdx].done=!arr[foundIdx].done;
+        window._cloudIntentions=arr;
+        if(SUPA&&currentUser){
+          try{await SUPA.from('intentions').update({done:arr[foundIdx].done}).eq('id',id).eq('user_id',currentUser.id);}catch(e){}
+        }
+        renderIntentions();
+      }
+    });
+  });
+
+  list.querySelectorAll('.int-del-btn').forEach(function(btn){
+    btn.addEventListener('click',async function(){
+      if(!confirm('Eliminare questa intenzione?'))return;
+      var id=btn.dataset.id;
+      window._cloudIntentions=getInts().filter(function(i){return i.id!==id;});
+      if(SUPA&&currentUser){
+        try{await SUPA.from('intentions').delete().eq('id',id).eq('user_id',currentUser.id);}catch(e){}
+      }
+      renderIntentions();
+    });
+  });
 }
 
 var intInput=document.getElementById('int-input'),intChars=document.getElementById('int-chars'),intAddBtn=document.getElementById('int-add-btn');
@@ -323,33 +400,99 @@ if(intAddBtn)intAddBtn.addEventListener('click',async function(){
   if(SUPA&&currentUser){
     try{
       var r=await SUPA.from('intentions').insert({user_id:currentUser.id,text:text.slice(0,500),done:false}).select().single();
-      if(r.data){var arr=getInts();arr.unshift(r.data);window._cloudIntentions=arr;}
+      if(r.data){window._cloudIntentions=[r.data].concat(getInts());}
     }catch(e){}
   }
-  intInput.value='';if(intChars)intChars.textContent='0';renderIntentions();
+  if(intInput){intInput.value='';if(intChars)intChars.textContent='0';}
+  renderIntentions();
 });
 if(intInput)intInput.addEventListener('keydown',function(e){if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)&&intAddBtn)intAddBtn.click();});
-document.addEventListener('DOMContentLoaded',renderIntentions);
+document.addEventListener('DOMContentLoaded',function(){if(currentUser)renderIntentions();});
 
-/* ── Streak (cloud when logged in, local when not) ── */
+/* ── Notes Preview (on main page) ── */
+window._cloudNotes = [];
+
+async function loadNotesPreview(){
+  if(!SUPA||!currentUser)return;
+  try{
+    var r=await SUPA.from('notes').select('id,title,content,updated_at,created_at').eq('user_id',currentUser.id).order('updated_at',{ascending:false}).limit(6);
+    window._cloudNotes=r.data||[];
+  }catch(e){window._cloudNotes=[];}
+}
+
+function renderNotesPreview(){
+  var section=document.getElementById('notes-preview-section');
+  var list=document.getElementById('note-preview-list');
+  if(!section||!list)return;
+  var notes=window._cloudNotes||[];
+  if(!notes.length){
+    list.innerHTML='<p class="note-preview-empty">Nessun appunto ancora. Inizia a scrivere nella pagina Appunti.</p>';
+    return;
+  }
+  list.innerHTML='';
+  notes.forEach(function(note){
+    var preview=(note.content||'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim().slice(0,120);
+    var dateStr='';try{dateStr=new Date(note.updated_at||note.created_at).toLocaleDateString('it-IT',{day:'numeric',month:'short'});}catch(e){}
+    var card=document.createElement('div');card.className='note-preview-card';
+    card.innerHTML='<div class="note-preview-header"><span class="note-preview-title">'+(note.title||'Senza titolo').replace(/</g,'&lt;')+'</span><span class="note-preview-date">'+dateStr+'</span></div><div class="note-preview-body hidden"><p class="note-preview-text">'+(preview||'\u2014').replace(/</g,'&lt;')+'</p></div><button class="note-preview-toggle" aria-expanded="false"><span class="note-preview-toggle-icon"></span></button>';
+    list.appendChild(card);
+    var toggleBtn=card.querySelector('.note-preview-toggle');
+    var body=card.querySelector('.note-preview-body');
+    toggleBtn.addEventListener('click',function(){
+      var open=toggleBtn.getAttribute('aria-expanded')==='true';
+      toggleBtn.setAttribute('aria-expanded',open?'false':'true');
+      body.classList.toggle('hidden',open);
+      card.classList.toggle('expanded',!open);
+    });
+  });
+}
+
+/* ── Streak (cloud only when logged in) ── */
 var STREAK_KEY='amdg_streak_v2';
-function getVisits(){try{return JSON.parse(localStorage.getItem(STREAK_KEY)||'[]');}catch(e){return[];}}
-function saveVisitsLocal(a){localStorage.setItem(STREAK_KEY,JSON.stringify(a));}
+function getVisits(){
+  if(currentUser) try{return JSON.parse(localStorage.getItem(STREAK_KEY+'_'+currentUser.id)||'[]');}catch(e){return[];}
+  return [];
+}
+function saveVisitsLocal(a,uid){localStorage.setItem(STREAK_KEY+'_'+uid,JSON.stringify(a));}
 async function loadStreakFromCloud(){
   if(!SUPA||!currentUser)return;
-  try{var r=await SUPA.from('streak').select('visits').eq('user_id',currentUser.id).single();if(r.data&&r.data.visits){var merged=Array.from(new Set([...getVisits(),...r.data.visits]));saveVisitsLocal(merged);}}catch(e){}
+  try{
+    var r=await SUPA.from('streak').select('visits').eq('user_id',currentUser.id).single();
+    if(r.data&&r.data.visits){
+      var merged=Array.from(new Set([].concat(getVisits(),r.data.visits)));
+      saveVisitsLocal(merged,currentUser.id);
+    }
+  }catch(e){}
 }
-async function saveStreakToCloud(a){if(!SUPA||!currentUser)return;try{await SUPA.from('streak').upsert({user_id:currentUser.id,visits:a},{onConflict:'user_id'});}catch(e){}}
-function recordVisit(){var today=todayISO(),arr=getVisits();if(!arr.includes(today)){arr.push(today);saveVisitsLocal(arr);saveStreakToCloud(arr);}}
+async function saveStreakToCloud(a){
+  if(!SUPA||!currentUser)return;
+  try{await SUPA.from('streak').upsert({user_id:currentUser.id,visits:a},{onConflict:'user_id'});}catch(e){}
+}
+function recordVisit(){
+  if(!currentUser)return;
+  var today=todayISO(),arr=getVisits();
+  if(!arr.includes(today)){arr.push(today);saveVisitsLocal(arr,currentUser.id);saveStreakToCloud(arr);}
+}
 function renderStreak(){
   var bar=document.getElementById('streak-bar');if(!bar)return;
+  if(!currentUser){bar.innerHTML='';return;}
   var arr=getVisits().sort();var today=todayISO();var total=arr.length;
-  var streak=0;var cur=new Date();while(true){var iso=cur.toISOString().slice(0,10);if(arr.includes(iso)){streak++;cur.setDate(cur.getDate()-1);}else break;}
-  var allDays=[];if(arr.length>0){var start=new Date(arr[0]);var end=new Date(today);var d=new Date(start);while(d<=end){allDays.push(d.toISOString().slice(0,10));d.setDate(d.getDate()+1);}}else allDays=[today];
+  var streak=0;var cur=new Date();
+  while(true){var iso=cur.toISOString().slice(0,10);if(arr.includes(iso)){streak++;cur.setDate(cur.getDate()-1);}else break;}
+  var allDays=[];
+  if(arr.length>0){var start=new Date(arr[0]);var end=new Date(today);var d=new Date(start);while(d<=end){allDays.push(d.toISOString().slice(0,10));d.setDate(d.getDate()+1);}}
+  else allDays=[today];
   var streakTxt=streak>=2?streak+' giorni':streak===1?'Qui oggi':'';
   bar.innerHTML='<div class="streak-wrap"><div class="streak-header"><span class="streak-label">Il tuo cammino \u2014 '+total+' '+(total===1?'giornata':'giornate')+'</span>'+(streakTxt?'<span class="streak-count">'+streakTxt+'</span>':'')+' </div><div class="streak-scroll" id="ss"><div class="streak-dots" id="sd"></div></div></div>';
-  var sd=bar.querySelector('#sd');allDays.forEach(function(iso){var dot=document.createElement('div');dot.className='streak-dot';dot.title=iso;if(iso===today)dot.classList.add('today');else if(arr.includes(iso))dot.classList.add('visited');sd.appendChild(dot);});
+  var sd=bar.querySelector('#sd');
+  allDays.forEach(function(iso){var dot=document.createElement('div');dot.className='streak-dot';dot.title=iso;if(iso===today)dot.classList.add('today');else if(arr.includes(iso))dot.classList.add('visited');sd.appendChild(dot);});
   var sc=bar.querySelector('#ss');if(sc)setTimeout(function(){sc.scrollLeft=sc.scrollWidth;},50);
 }
-recordVisit();
-document.addEventListener('DOMContentLoaded',renderStreak);
+
+/* Buttons */
+var btnPrimary=document.querySelectorAll('.btn-primary,.btn-outline,.btn-danger,.btn-icon-sm,.btn-ghost-sm');
+/* Render on load */
+document.addEventListener('DOMContentLoaded',function(){
+  renderPrayers();
+  updateAuthUI();
+});
