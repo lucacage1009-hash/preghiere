@@ -126,7 +126,59 @@ function extractGospel(html){
   return null;
 }
 
-/* ── Ambrosiano source 1: vangelodelgiorno.org ── */
+/* ── Extract gospel from apostolesacrocuore.org HTML ── */
+function extractApostole(html){
+  if(!html||html.length<200) return null;
+
+  /* Reference: "Dal Vangelo secondo X" */
+  let ref='';
+  const refM=html.match(/Dal\s+Vangelo\s+secondo\s+[^\n<*]{4,80}/i)
+           ||html.match(/Dal\s+Vangelo\s+di\s+Ges[^\n<*]{4,80}/i);
+  if(refM) ref=clean(refM[0]).slice(0,140);
+
+  /* Gospel text sits between the bold reference line and the Salmo/social share block.
+     The page uses markdown-like structure after fetch, with ** for bold. */
+  const gspStart=html.indexOf('**Dal Vangelo');
+  if(gspStart<0){
+    /* Fallback: try plain text after "Dal Vangelo" */
+    const start2=html.search(/Dal\s+Vangelo\s+(secondo|di)/i);
+    if(start2<0) return null;
+    const chunk=html.slice(start2,start2+4000);
+    const lines=chunk.split('\n').map(l=>l.replace(/\*\*/g,'').trim())
+      .filter(l=>l.length>30&&!/^(dal vangelo|condividi|salmo|lettura|facebook|twitter|cookie|privacy)/i.test(l))
+      .slice(0,30);
+    if(lines.length<2) return null;
+    return {reference:ref||'Vangelo — Rito Ambrosiano', text:lines.join('\n')};
+  }
+
+  /* Slice from just after the bold reference to social share / Salmo */
+  const afterRef=html.indexOf('\n',gspStart+5);
+  const endMarkers=['**Salmo','Condividi su','facebook.com','twitter.com','Il Vangelo Rito Ambrosiano'];
+  let endPos=html.length;
+  for(const m of endMarkers){
+    const i=html.indexOf(m,afterRef);
+    if(i>0&&i<endPos) endPos=i;
+  }
+  const chunk=html.slice(afterRef,endPos);
+  const lines=chunk.split('\n').map(l=>l.replace(/\*\*/g,'').trim())
+    .filter(l=>l.length>30&&!/^(ascolti|lettura|salmo|condividi)/i.test(l))
+    .slice(0,35);
+  if(lines.length<2) return null;
+  return {reference:ref||'Vangelo — Rito Ambrosiano', text:lines.join('\n')};
+}
+
+/* ── Ambrosiano source 1 (PRIMARY): apostolesacrocuore.org ── */
+async function tryApostole(d){
+  const iso=isoDate(d);
+  try{
+    const html=await httpGet(`https://www.apostolesacrocuore.org/vangelo-oggi-ambrosiano.php?data=${iso}`);
+    const result=extractApostole(html);
+    if(result&&result.text.length>100) return result;
+  }catch(e){ console.error('  apostole err:',e.message); }
+  return null;
+}
+
+/* ── Ambrosiano source 2 (FALLBACK): vangelodelgiorno.org ── */
 async function tryVdg(d){
   const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');
   const urls=[
@@ -144,17 +196,7 @@ async function tryVdg(d){
   return null;
 }
 
-/* ── Ambrosiano source 2: laparola.it ── */
-async function tryLaParola(){
-  try{
-    const html=await httpGet('https://www.laparola.it/ambrosiano/liturgia-della-parola/');
-    const result=extractGospel(html);
-    if(result&&result.text.length>100) return result;
-  }catch(e){}
-  return null;
-}
-
-/* ── Ambrosiano source 3: missaleambrosianum.it ── */
+/* ── Ambrosiano source 3 (FALLBACK): missaleambrosianum.it ── */
 async function tryMissale(d){
   try{
     const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');
@@ -165,22 +207,11 @@ async function tryMissale(d){
   return null;
 }
 
-/* ── Ambrosiano source 4: diocesimilano.it ── */
-async function tryDiocesi(){
-  try{
-    const html=await httpGet('https://www.diocesimilano.it/chiesa-e-comunita/liturgia/');
-    const result=extractGospel(html);
-    if(result&&result.text.length>100) return result;
-  }catch(e){}
-  return null;
-}
-
 async function fetchAmbrosiano(d){
-  /* Try all sources, return first hit */
-  const result = await tryVdg(d)
-              || await tryLaParola()
-              || await tryMissale(d)
-              || await tryDiocesi();
+  /* PRIMARY: apostolesacrocuore.org (plain PHP, accepts ?data=YYYY-MM-DD, no JS required) */
+  const result = await tryApostole(d)
+              || await tryVdg(d)
+              || await tryMissale(d);
   return result;
 }
 
