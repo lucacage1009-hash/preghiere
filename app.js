@@ -207,7 +207,7 @@ function showAuthErr(msg) {
 
 /* ── Gospel ── */
 var currentRite='romano', gospelsCache=null;
-var LINKS={romano:'https://www.vaticannews.va/it/vangelo-del-giorno-e-parola-del-giorno.html',ambrosiano:'https://www.laparola.it/ambrosiano/liturgia-della-parola/'};
+var LINKS={romano:'https://www.vaticannews.va/it/vangelo-del-giorno-e-parola-del-giorno.html',ambrosiano:'https://www.chiesadimilano.it/letture-rito-ambrosiano'};
 
 function decodeHtmlEntities(str){
   var map={'&rsquo;':'\u2019','&lsquo;':'\u2018','&rdquo;':'\u201D','&ldquo;':'\u201C',
@@ -236,6 +236,44 @@ function fillEl(el,text){
   el.innerHTML='';
   cleanText(text).split('\n').filter(function(p){return p.trim();}).forEach(function(t){var p=document.createElement('p');p.textContent=t;el.appendChild(p);});
 }
+/* Extract only the gospel reading from ambrosiano text (remove prayers, psalms, prefaces etc.) */
+function extractGospelOnly(raw){
+  var cleaned=cleanText(raw||'');
+  var lines=cleaned.split('\n');
+  /* Find lines that mark the start of the gospel reading */
+  var gospelStartPatterns=[
+    /Lettura del Vangelo/i,
+    /Dal Vangelo/i,
+    /Vangelo secondo/i,
+  ];
+  var gospelEndPatterns=[
+    /^https?:\/\//i,
+    /^Ascolta/i,
+    /^A CONCLUSIONE/i,
+    /^Gradisci/i,
+    /^\u00c8 veramente cosa buona/i,
+    /^Ascolta, Signore/i,
+    /^Il Signore si ricord/i,
+    /^Signore, non disperdere/i,
+  ];
+  var start=-1, end=-1;
+  for(var i=0;i<lines.length;i++){
+    if(start===-1){
+      for(var p=0;p<gospelStartPatterns.length;p++){
+        if(gospelStartPatterns[p].test(lines[i])){start=i;break;}
+      }
+    } else {
+      for(var q=0;q<gospelEndPatterns.length;q++){
+        if(gospelEndPatterns[q].test(lines[i])){end=i;break;}
+      }
+      if(end!==-1) break;
+    }
+  }
+  if(start===-1) return cleaned; /* fallback: return everything */
+  var gospelLines=lines.slice(start, end===-1?undefined:end);
+  /* Remove the "Lettura del Vangelo secondo X" header line — keep it as reference */
+  return gospelLines.join('\n');
+}
 
 var gLoad=document.getElementById('gospel-loading'),gContent=document.getElementById('gospel-content'),gError=document.getElementById('gospel-error');
 var gRef=document.getElementById('gospel-reference'),gText=document.getElementById('gospel-text'),gLink=document.getElementById('gospel-source-link');
@@ -246,14 +284,22 @@ function showLoading(){if(gLoad)gLoad.classList.remove('hidden');if(gContent)gCo
 function showContent(data,rite){
   if(gLoad)gLoad.classList.add('hidden');if(gError)gError.classList.add('hidden');
   if(gRef)gRef.textContent=cleanText(data.reference)||'Vangelo del Giorno';
-  if(gText)fillEl(gText,data.text);
+  /* For ambrosiano, extract only the gospel pericope */
+  if(rite==='ambrosiano') fillEl(gText, extractGospelOnly(data.text));
+  else if(gText) fillEl(gText,data.text);
   if(gLink)gLink.href=LINKS[rite];
-  /* Hide comment section for ambrosiano (not available yet) */
+  /* Show comment for both rites; for ambrosiano label it as romano */
   if(cSection){
-    if(rite==='romano'){
-      var ct=cleanText(data.commentText||'');
-      if(ct.length>30){if(cTitle)cTitle.textContent=cleanText(data.commentTitle)||'Commento';if(cAuth)cAuth.textContent=cleanText(data.commentAuthor)?'\u2014 '+cleanText(data.commentAuthor):'';if(cText)fillEl(cText,data.commentText);cSection.classList.remove('hidden');}
-      else cSection.classList.add('hidden');
+    var ct=cleanText(data.commentText||'');
+    if(ct.length>30){
+      var commentLabel=rite==='romano'?'Commento al Vangelo':'Commento al Vangelo Romano';
+      if(cTitle)cTitle.textContent=cleanText(data.commentTitle)||commentLabel;
+      /* Show the rite label as a small note for ambrosiano */
+      var cTag=cSection.querySelector('.comment-tag');
+      if(cTag)cTag.textContent=commentLabel;
+      if(cAuth)cAuth.textContent=cleanText(data.commentAuthor)?'\u2014 '+cleanText(data.commentAuthor):'';
+      if(cText)fillEl(cText,data.commentText);
+      cSection.classList.remove('hidden');
     } else {
       cSection.classList.add('hidden');
     }
