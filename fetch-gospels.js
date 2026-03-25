@@ -197,7 +197,14 @@ async function main(){
     const d=dates[i], iso=isoDate(d), ds=evaDate(d);
     const ex=gospels[iso];
     const romanOk=ex?.romano?.text?.length>20;
-    const ambOk=ex?.ambrosiano?.text?.length>20&&!ex.ambrosiano.reference?.includes('rito romano');
+    /* An ambrosiano entry is only valid if it was fetched from a date-specific URL.
+       We detect "homepage pollution" by checking for liturgical filler text that
+       a homepage would include but a gospel-only page would not. */
+    const ambText=ex?.ambrosiano?.text||'';
+    const ambPolluted=/(ALL'INIZIO DELL'ASSEMBLEA|A CONCLUSIONE DELLA LITURGIA|Gradisci, o Padre|veramente cosa buona e giusta|Ascolta, Signore, la voce|perdona le nostre colpe)/i.test(ambText);
+    const ambOk=ambText.length>20
+      && !ex.ambrosiano.reference?.includes('rito romano')
+      && !ambPolluted;
 
     if(romanOk&&ambOk){sk++;process.stdout.write(`\r  [${i+1}/${dates.length}] skip ${iso}`);continue;}
 
