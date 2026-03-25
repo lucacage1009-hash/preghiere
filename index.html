@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;0,9..144,900;1,9..144,300;1,9..144,500;1,9..144,700&family=Barlow:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap" rel="stylesheet"/>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
@@ -149,8 +149,15 @@
 
   <!-- INTENZIONI — solo se loggato -->
   <section class="block personal-section" id="intentions-section">
-    <div class="block-eyebrow">Le Mie Intenzioni</div>
+    <div class="block-eyebrow-row">
+      <span class="block-eyebrow">Le Mie Intenzioni</span>
+      <span class="int-info-wrap">
+        <span class="int-info-btn" tabindex="0" aria-label="Informazione sulle intenzioni">&#9432;</span>
+        <span class="int-info-tooltip">Il Signore conosce ciò di cui hai bisogno prima ancora che tu lo chieda. Affida a Lui le tue intenzioni con fiducia: Egli è buono verso coloro che lo cercano.</span>
+      </span>
+    </div>
     <div class="card intentions-card">
+      <p class="int-chiedi">&#171;Chiedete e vi sarà dato&#187; <span class="int-chiedi-ref">Mt 7,7</span></p>
       <div class="intentions-compose">
         <textarea id="int-input" class="int-textarea" maxlength="500" rows="3"
           placeholder="Scrivi un&#8217;intenzione di preghiera&#8230;"></textarea>
