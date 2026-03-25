@@ -57,7 +57,13 @@ function initSupabase() {
     return;
   }
   try {
-    SUPA = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    SUPA = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+      auth: {
+        persistSession: true,      /* Salva il token in localStorage → non serve rifare login */
+        autoRefreshToken: true,    /* Rinnova automaticamente il token prima che scada */
+        storageKey: 'amdg_sb_auth' /* Chiave localStorage dedicata */
+      }
+    });
   } catch(e) {
     console.error('AMDG: errore createClient Supabase (chiave non valida?):', e);
     return;
@@ -291,6 +297,36 @@ async function fromAmbAPIRealtime(){
   if(lines.length<2)throw new Error('too short');
   return{reference:ref||'Vangelo — Rito Ambrosiano',text:lines.join('\n'),commentTitle:'',commentAuthor:'',commentText:''};
 }
+
+/* Real-time Ambrosian comment via tiraccontolaparola.it */
+var IT_MONTHS_AMB=['gennaio','febbraio','marzo','aprile','maggio','giugno','luglio','agosto','settembre','ottobre','novembre','dicembre'];
+async function fetchAmbCommentRealtime(){
+  var d=new Date();
+  var url='https://www.tiraccontolaparola.it/rito-ambrosiano-commento-al-vangelo-del-'+d.getDate()+'-'+IT_MONTHS_AMB[d.getMonth()]+'-'+d.getFullYear()+'/';
+  try{
+    var html=await fetch(PROXY+encodeURIComponent(url)).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.text();});
+    if(html.includes('Pagina non trovata')||html.length<1000)return null;
+    /* Extract comment title */
+    var ct='',ca='',ctxt='';
+    var titleM=html.match(/<strong[^>]*>"([^"<]{10,200})"<\/strong>/i)||html.match(/<strong[^>]*>«([^»<]{10,200})»<\/strong>/i);
+    if(titleM)ct=titleM[1].trim();
+    var authorM=html.match(/<em>([A-Z][a-zàèéìòù]+ [A-Z][a-zàèéìòù]+)<\/em>/);
+    if(authorM)ca=authorM[1].trim();
+    /* Extract body: from strong title to newsletter */
+    var startIdx=titleM?html.indexOf(titleM[0]):-1;
+    if(startIdx<0){var ol=html.lastIndexOf('</ol>');startIdx=ol>0?ol:html.indexOf('<p>');}
+    var endIdx=html.length;
+    ['Iscriviti alla Newsletter','Cookie Policy','Privacy Policy'].forEach(function(m){var i=html.indexOf(m,startIdx);if(i>0&&i<endIdx)endIdx=i;});
+    var slice=html.slice(startIdx,endIdx);
+    var lines=slice.replace(/<[^>]+>/g,' ').replace(/&[a-z#0-9]+;/gi,' ')
+      .split(/\n|\.(?=\s+[A-Z])/)
+      .map(function(l){return l.trim();})
+      .filter(function(l){return l.length>30&&!/^(iscriviti|cookie|privacy|nome|cognome|email|invia|accetto|copyright)/i.test(l)});
+    if(lines.length<3)return null;
+    ctxt=lines.join('\n');
+    return{commentTitle:ct||'Commento al Vangelo Ambrosiano',commentAuthor:ca||'Ti racconto la Parola',commentText:ctxt};
+  }catch(e){return null;}
+}
 async function loadGospel(rite){
   showLoading();
   try{
@@ -299,15 +335,21 @@ async function loadGospel(rite){
     try{data=await fromFile(rite);ok=true;}catch(e){}
     if(!ok){
       if(rite==='ambrosiano'){
-        /* 2a) Real-time Ambrosian source */
+        /* 2a) Real-time Ambrosian gospel source */
         try{data=await fromAmbAPIRealtime();}catch(e){
-          /* 2b) Last resort: Romano text labelled as ambrosiano */
+          /* 2b) Last resort: Romano text */
           data=await fromAPI();data.reference+=' (rito romano)';
         }
       } else {
-        /* Romano real-time */
         data=await fromAPI();
       }
+    }
+    /* 3) If ambrosiano comment is missing, try fetching it real-time */
+    if(rite==='ambrosiano'&&(!data.commentText||data.commentText.length<30)){
+      try{
+        var c=await fetchAmbCommentRealtime();
+        if(c){data.commentTitle=c.commentTitle;data.commentAuthor=c.commentAuthor;data.commentText=c.commentText;}
+      }catch(e){}
     }
     showContent(data,rite);
   }catch(err){showError(rite);}
