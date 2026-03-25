@@ -91,7 +91,7 @@ function updateAuthUI() {
     personalSections.forEach(function(s){s.style.display='';});
     if(loginPrompt) loginPrompt.classList.add('hidden');
     prayerControls.forEach(function(b){b.style.display='';});
-    if(streakBar) streakBar.style.display='';
+    if(streakBar) streakBar.style.display='block';
   } else {
     btn.classList.remove('logged-in');
     lbl.textContent = 'Accedi';
@@ -140,18 +140,45 @@ function closeAuth() { if(authOverlay) authOverlay.classList.add('hidden'); }
 var authBtn = document.getElementById('auth-btn');
 var authClose = document.getElementById('auth-close');
 
+var WELCOME_KEY='amdg_welcome_v1';
+var welcomeOverlay=document.getElementById('welcome-overlay');
+var welcomeProceedBtn=document.getElementById('welcome-proceed');
+
+function hasSeenWelcome(){ return localStorage.getItem(WELCOME_KEY)==='1'; }
+function markWelcomeSeen(){ localStorage.setItem(WELCOME_KEY,'1'); }
+
+function openAuthWithWelcome(){
+  if(!hasSeenWelcome()){
+    if(welcomeOverlay) welcomeOverlay.classList.remove('hidden');
+  } else {
+    openAuth();
+  }
+}
+
+if(welcomeProceedBtn) welcomeProceedBtn.addEventListener('click',function(){
+  markWelcomeSeen();
+  if(welcomeOverlay) welcomeOverlay.classList.add('hidden');
+  openAuth();
+});
+if(welcomeOverlay) welcomeOverlay.addEventListener('click',function(e){
+  if(e.target===welcomeOverlay){
+    markWelcomeSeen();
+    welcomeOverlay.classList.add('hidden');
+  }
+});
+
 if(authBtn) authBtn.addEventListener('click', function() {
   if(currentUser) {
     if(confirm('Vuoi uscire dal tuo account?')) {
       if(SUPA) SUPA.auth.signOut();
     }
-  } else { openAuth(); }
+  } else { openAuthWithWelcome(); }
 });
 if(authClose) authClose.addEventListener('click', closeAuth);
 if(authOverlay) authOverlay.addEventListener('click', function(e){ if(e.target===authOverlay) closeAuth(); });
 
 var loginPromptBtn = document.getElementById('login-prompt-btn');
-if(loginPromptBtn) loginPromptBtn.addEventListener('click', openAuth);
+if(loginPromptBtn) loginPromptBtn.addEventListener('click', openAuthWithWelcome);
 
 var authSwitch = document.getElementById('auth-switch');
 if(authSwitch) authSwitch.addEventListener('click', function() {
@@ -388,7 +415,7 @@ function renderPrayers(){
 }
 
 var peOverlay=document.getElementById('pe-overlay'),peEditIdx=-1;
-function openPE(idx){peEditIdx=idx;var prayers=getPrayers();var p=idx>=0&&idx<prayers.length?prayers[idx]:null;document.getElementById('pe-title').textContent=p?'Modifica Preghiera':'Nuova Preghiera';document.getElementById('pe-emoji').value=p?p.emoji:'\u2728';document.getElementById('pe-tag').value=p?p.tag:'';document.getElementById('pe-name').value=p?p.name:'';document.getElementById('pe-text').value=p?(p.id==='angelus'?'(Angelus \u2014 testo fisso)':p.text):'';var del=document.getElementById('pe-delete');if(del)del.classList.toggle('hidden',!(p&&!p.isDefault));if(peOverlay)peOverlay.classList.remove('hidden');}
+function openPE(idx){peEditIdx=idx;var prayers=getPrayers();var p=idx>=0&&idx<prayers.length?prayers[idx]:null;document.getElementById('pe-title').textContent=p?'Modifica Preghiera':'Nuova Preghiera';document.getElementById('pe-emoji').value=p?p.emoji:'\u2728';document.getElementById('pe-tag').value=p?p.tag:'';document.getElementById('pe-name').value=p?p.name:'';document.getElementById('pe-text').value=p?(p.id==='angelus'?'(Angelus \u2014 testo fisso)':p.text):'';var del=document.getElementById('pe-delete');if(del)del.classList.toggle('hidden',!p);if(peOverlay)peOverlay.classList.remove('hidden');}
 function closePE(){if(peOverlay)peOverlay.classList.add('hidden');peEditIdx=-1;}
 var peClose=document.getElementById('pe-close'),peCancel=document.getElementById('pe-cancel');
 if(peClose)peClose.addEventListener('click',closePE);if(peCancel)peCancel.addEventListener('click',closePE);
