@@ -59,33 +59,26 @@ function initSupabase() {
   try {
     SUPA = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
       auth: {
-        persistSession: true,      /* Salva il token in localStorage → non serve rifare login */
-        autoRefreshToken: true,    /* Rinnova automaticamente il token prima che scada */
-        storageKey: 'amdg_sb_auth' /* Chiave localStorage dedicata */
+        persistSession: true,
+        autoRefreshToken: true,
+        storageKey: 'amdg_sb_auth'
       }
     });
   } catch(e) {
-    console.error('AMDG: errore createClient Supabase (chiave non valida?):', e);
+    console.error('AMDG: errore createClient Supabase:', e);
     return;
   }
 
-  /* Get current session immediately on load */
   SUPA.auth.getSession().then(function(res) {
     currentUser = (res.data && res.data.session) ? res.data.session.user : null;
     updateAuthUI();
-    if(currentUser) {
-      loadAllUserData();
-    }
+    if(currentUser) { loadAllUserData(); }
   }).catch(function(e){ console.error('AMDG: getSession error:', e); });
 
   SUPA.auth.onAuthStateChange(function(event, session) {
     currentUser = session ? session.user : null;
     updateAuthUI();
-    if(currentUser) {
-      loadAllUserData();
-    } else {
-      showLoggedOutState();
-    }
+    if(currentUser) { loadAllUserData(); } else { showLoggedOutState(); }
   });
 }
 initSupabase();
@@ -96,13 +89,10 @@ function updateAuthUI() {
   var btn=document.getElementById('auth-btn'), lbl=document.getElementById('auth-btn-label');
   var notesBtn=document.getElementById('notes-btn');
   if(!btn||!lbl) return;
-
-  /* Personal sections */
   var personalSections = document.querySelectorAll('.personal-section');
   var loginPrompt = document.getElementById('login-prompt');
   var prayerControls = document.querySelectorAll('.prayer-edit-btn, #add-prayer-btn, #reset-prayers-btn');
   var streakBar = document.getElementById('streak-bar');
-
   if(currentUser) {
     btn.classList.add('logged-in');
     lbl.textContent = (currentUser.email||'').replace('@amdg.app','') || 'Account';
@@ -142,7 +132,7 @@ async function loadAllUserData() {
     loadStreakFromCloud(),
     loadNotesPreview()
   ]);
-  recordVisit(); /* Register today's visit before rendering */
+  recordVisit();
   renderIntentions();
   renderPrayers();
   renderStreak();
@@ -161,9 +151,7 @@ var authClose = document.getElementById('auth-close');
 
 if(authBtn) authBtn.addEventListener('click', function() {
   if(currentUser) {
-    if(confirm('Vuoi uscire dal tuo account?')) {
-      if(SUPA) SUPA.auth.signOut();
-    }
+    if(confirm('Vuoi uscire dal tuo account?')) { if(SUPA) SUPA.auth.signOut(); }
   } else { openAuth(); }
 });
 if(authClose) authClose.addEventListener('click', closeAuth);
@@ -264,113 +252,129 @@ function showError(rite){
   if(errLinks){errLinks.innerHTML='';var links=rite==='romano'?[{t:'Vatican News',u:LINKS.romano}]:[{t:'La Parola Ambrosiano',u:LINKS.ambrosiano}];links.forEach(function(l){var a=document.createElement('a');a.href=l.u;a.textContent=l.t;a.target='_blank';a.rel='noopener noreferrer';errLinks.appendChild(a);});}
   if(gError)gError.classList.remove('hidden');
 }
+
 async function fromFile(rite){
   if(!gospelsCache){var r=await fetch('./gospels.json?v='+todayISO());if(!r.ok)throw new Error('no file');gospelsCache=await r.json();}
   var entry=gospelsCache[todayISO()];if(!entry)throw new Error('no date');
   var data=entry[rite];if(!data||!data.text)throw new Error('no text');
-  /* Ambrosiano validation: reject if it's just a roman fallback or if the text
-     is suspiciously long (captured whole liturgy) or looks like non-gospel content */
   if(rite==='ambrosiano'){
-    if(data.reference&&data.reference.includes('rito romano'))throw new Error('ambrosiano fallback, use realtime');
-    if(data.text.length>4000)throw new Error('ambrosiano text too long, likely full liturgy');
-    if(/PREFAZIO|SUI DONI|A CONCLUSIONE|perdona le nostre colpe|ALLA FINE|salvaci\./i.test(data.text))throw new Error('ambrosiano contains liturgy, use realtime');
+    if(data.reference&&data.reference.includes('rito romano'))throw new Error('ambrosiano fallback');
+    if(data.text.length>4000)throw new Error('ambrosiano text too long');
+    if(/PREFAZIO|SUI DONI|A CONCLUSIONE|perdona le nostre colpe|salvaci\.|ALLA FINE/i.test(data.text))throw new Error('ambrosiano contains liturgy');
   }
   return data;
 }
-var PROXY='https://api.allorigins.win/raw?url=',EVA='https://feed.evangelizo.org/v2/reader.php';
+
+/* ── Proxy multipli con fallback automatico ── */
+var PROXIES = [
+  'https://api.allorigins.win/raw?url=',
+  'https://corsproxy.io/?',
+  'https://api.codetabs.com/v1/proxy?quest='
+];
+var EVA='https://feed.evangelizo.org/v2/reader.php';
 var APOSTOLE_AMB='https://www.apostolesacrocuore.org/vangelo-oggi-ambrosiano.php';
-async function evaFetch(p){var qs=Object.keys(p).map(function(k){return encodeURIComponent(k)+'='+encodeURIComponent(p[k]);}).join('&');var r=await fetch(PROXY+encodeURIComponent(EVA+'?'+qs));if(!r.ok)throw new Error('HTTP '+r.status);return(await r.text()).trim();}
-async function fromAPI(){var d=todayFmt(),l='IT';var res=await Promise.all([evaFetch({date:d,lang:l,type:'reading_lt',content:'GSP'}),evaFetch({date:d,lang:l,type:'reading',content:'GSP'}),evaFetch({date:d,lang:l,type:'comment_t'}),evaFetch({date:d,lang:l,type:'comment_a'}),evaFetch({date:d,lang:l,type:'comment'})]);if(!res[1]||res[1].length<20)throw new Error('empty');return{reference:res[0],text:res[1],commentTitle:res[2],commentAuthor:res[3],commentText:res[4]};}
 
-/* Real-time Ambrosian gospel: apostolesacrocuore.org
-   Page contains the FULL Ambrosian Liturgy of the Word.
-   We isolate ONLY the gospel section working line by line. */
+async function proxyFetch(url) {
+  var lastErr;
+  for (var i = 0; i < PROXIES.length; i++) {
+    try {
+      var r = await fetch(PROXIES[i] + encodeURIComponent(url));
+      if (r.ok) return r.text();
+    } catch(e) { lastErr = e; }
+  }
+  throw lastErr || new Error('all proxies failed for ' + url);
+}
+
+async function evaFetch(p){
+  var qs=Object.keys(p).map(function(k){return encodeURIComponent(k)+'='+encodeURIComponent(p[k]);}).join('&');
+  return (await proxyFetch(EVA+'?'+qs)).trim();
+}
+
+async function fromAPI(){
+  var d=todayFmt(),l='IT';
+  var res=await Promise.all([
+    evaFetch({date:d,lang:l,type:'reading_lt',content:'GSP'}),
+    evaFetch({date:d,lang:l,type:'reading',content:'GSP'}),
+    evaFetch({date:d,lang:l,type:'comment_t'}),
+    evaFetch({date:d,lang:l,type:'comment_a'}),
+    evaFetch({date:d,lang:l,type:'comment'})
+  ]);
+  if(!res[1]||res[1].length<20)throw new Error('empty');
+  return{reference:res[0],text:res[1],commentTitle:res[2],commentAuthor:res[3],commentText:res[4]};
+}
+
+/* ── Vangelo ambrosiano real-time da apostolesacrocuore.org ── */
 async function fromAmbAPIRealtime(){
-  var iso=todayISO();
-  var url=APOSTOLE_AMB+'?data='+iso;
-  var raw=await fetch(PROXY+encodeURIComponent(url)).then(function(r){
-    if(!r.ok)throw new Error('HTTP '+r.status);return r.text();
-  });
+  var iso = todayISO();
+  var raw = await proxyFetch(APOSTOLE_AMB + '?data=' + iso);
 
-  /* Convert HTML to clean lines */
-  var text=raw
-    .replace(/<br\s*\/?>/gi,'\n').replace(/<\/p>\s*/gi,'\n').replace(/<\/li>\s*/gi,'\n')
-    .replace(/<\/h[1-6]>\s*/gi,'\n').replace(/<[^>]+>/g,'')
+  /* Converti HTML in testo pulito riga per riga */
+  var text = raw
+    .replace(/<br\s*\/?>/gi,'\n').replace(/<\/p>\s*/gi,'\n')
+    .replace(/<\/li>\s*/gi,'\n').replace(/<\/h[1-6]>\s*/gi,'\n')
+    .replace(/<\/div>\s*/gi,'\n').replace(/<[^>]+>/g,'')
     .replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>')
     .replace(/&nbsp;/g,' ').replace(/&apos;/g,"'").replace(/&quot;/g,'"')
     .replace(/&#(\d+);/g,function(_,n){return String.fromCharCode(parseInt(n,10));})
-    .replace(/&#x([0-9a-f]+);/gi,function(_,h){return String.fromCharCode(parseInt(h,16));});
+    .replace(/&#x([0-9a-f]+);/gi,function(_,h){return String.fromCharCode(parseInt(h,16));})
+    .replace(/\*\*/g,'');
 
-  var lines=text.split('\n').map(function(l){return l.trim();}).filter(function(l){return l.length>0;});
+  var lines = text.split('\n').map(function(l){return l.trim();}).filter(function(l){return l.length>0;});
 
-  /* Find the LAST "Lettura del Vangelo" / "Dal Vangelo" line */
-  var gspLineIdx=-1;
+  /* Trova l'ULTIMA "Lettura del Vangelo" / "Dal Vangelo" */
+  var gspLineIdx = -1;
   for(var i=lines.length-1;i>=0;i--){
     if(/^(Lettura del Vangelo|Dal Vangelo di Ges|Dal Vangelo secondo)/i.test(lines[i])){
       gspLineIdx=i; break;
     }
   }
-  if(gspLineIdx<0)throw new Error('gospel header not found');
+  if(gspLineIdx<0) throw new Error('gospel header not found');
 
-  /* Reference: header line + optional citation on next line */
-  var refLine=lines[gspLineIdx].replace(/^Lettura del /i,'Dal ');
-  var nextLine=lines[gspLineIdx+1]||'';
-  var ref=refLine+(/^[A-Z][a-z]{0,2}\s+\d/.test(nextLine)?'\n'+nextLine:'');
+  var ref = lines[gspLineIdx].replace(/^Lettura del /i,'Dal ');
 
-  /* Body: scan forward from gspLineIdx, collect gospel text lines */
-  var bodyLines=[];
-  var inBody=false;
+  /* Raccoglie le righe del vangelo */
+  var STARTERS = /^(In quel tempo|Nel sesto mese|Il Signore Ges|Il Signore disse|Ges\u00f9 disse|In quel giorno|Allora Ges\u00f9)/i;
+  var ENDERS   = /^(https?:\/\/|Il Signore si ricord|A CONCLUSIONE|DOPO IL VANGELO|Ascolta, Signore|O Dio forte|Gradisci|SUI DONI|PREFAZIO|\u00c8 veramente cosa|Santo)/i;
+
+  var bodyLines=[], inBody=false;
   for(var j=gspLineIdx+1;j<lines.length;j++){
     var l=lines[j];
-    /* Start collecting at "In quel tempo" or "Il Signore Gesù" */
-    if(!inBody&&(/^In quel tempo/i.test(l)||/^Il Signore Gesù/i.test(l)||/^Il Signore disse/i.test(l))){
-      inBody=true;
-    }
+    if(!inBody && STARTERS.test(l)){ inBody=true; }
     if(!inBody) continue;
-    /* Stop at audio URL, post-gospel prayers, or next liturgical section */
-    if(/^https?:\/\//i.test(l))break;
-    if(/^(Il Signore si ricordò|A CONCLUSIONE|DOPO IL VANGELO|Ascolta, Signore|O Dio forte|Gradisci|SUI DONI|PREFAZIO|È veramente cosa buona|Porgi ascolto|Santo\u2026|Amen\s*$)/i.test(l))break;
+    if(ENDERS.test(l)) break;
     if(l.length>10) bodyLines.push(l);
-    if(bodyLines.length>=45)break;
+    if(bodyLines.length>=50) break;
   }
 
-  if(bodyLines.length<2)throw new Error('gospel body too short ('+bodyLines.length+' lines)');
-  return{reference:ref,text:bodyLines.join('\n'),commentTitle:'',commentAuthor:'',commentText:''};
+  if(bodyLines.length<2) throw new Error('gospel body too short ('+bodyLines.length+' lines)');
+  return{reference:ref, text:bodyLines.join('\n'), commentTitle:'', commentAuthor:'', commentText:''};
 }
 
-/* Real-time Ambrosian comment — primary: qumran2.net, fallback: tiraccontolaparola.it */
+/* ── Commento ambrosiano real-time ── */
 var IT_MONTHS_AMB=['gennaio','febbraio','marzo','aprile','maggio','giugno','luglio','agosto','settembre','ottobre','novembre','dicembre'];
 
 async function fetchQumranComment(){
-  /* qumran2 shows the first ambrosian comment for today directly via ?rito=ambrosiano&data=YYYY-MM-DD */
   var url='https://www.qumran2.net/parolenuove/commenti.php?rito=ambrosiano&criteri=1&data='+todayISO()+'&tipo=testo';
-  var raw=await fetch(PROXY+encodeURIComponent(url)).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.text();});
+  var raw=await proxyFetch(url);
   if(raw.length<500||raw.includes('Nessun commento'))return null;
-
-  /* Title: first <a> inside a TESTO block */
   var ct='',ca='',ctxt='';
-  var titleM=raw.match(/TESTO\d+\.\s*<[^>]+>\s*\*?\*?([^\[<\n]{10,200}?)\*?\*?\s*<\/a>/i);
-  if(!titleM)titleM=raw.match(/class="tit_com"[^>]*>\s*([^<]{10,200})\s*</i);
-  if(!titleM)titleM=raw.match(/\[([^\]]{10,120})\]\(https?:\/\/www\.qumran/);
+  var titleM=raw.match(/TESTO\d+\.\s*<[^>]+>\s*\*?\*?([^\[<\n]{10,200}?)\*?\*?\s*<\/a>/i)
+            ||raw.match(/class="tit_com"[^>]*>\s*([^<]{10,200})\s*</i)
+            ||raw.match(/\[([^\]]{10,120})\]\(https?:\/\/www\.qumran/);
   if(titleM)ct=titleM[1].replace(/\*/g,'').trim();
-
-  /* Author */
   var authorM=raw.match(/\[([^\]]{4,60})\]\(https?:\/\/www\.qumran2\.net\/parolenuove\/commenti\.php\?criteri=1&autore=/);
   if(authorM)ca=authorM[1].replace(/\*/g,'').trim();
-
-  /* Body: strip HTML, take first substantial block between title and next TESTO/footer */
   var bodyStart=titleM?raw.indexOf(titleM[0]):raw.indexOf('<p>');
   var bodyEnd=raw.length;
-  var nextTESTO=raw.indexOf('TESTO',bodyStart+titleM[0].length+1);
+  var nextTESTO=raw.indexOf('TESTO',bodyStart+(titleM?titleM[0].length+1:1));
   if(nextTESTO>0)bodyEnd=nextTESTO;
   ['Iscriviti','Cookie Policy','Qumran2.net, dal'].forEach(function(m){var i=raw.indexOf(m,bodyStart);if(i>0&&i<bodyEnd)bodyEnd=i;});
-
-  var slice=raw.slice(bodyStart,bodyEnd)
+  var lines=raw.slice(bodyStart,bodyEnd)
     .replace(/<br\s*\/?>/gi,'\n').replace(/<\/p>/gi,'\n').replace(/<[^>]+>/g,' ')
     .replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&nbsp;/g,' ')
-    .replace(/&#(\d+);/g,function(_,n){return String.fromCharCode(parseInt(n,10));});
-  var lines=slice.split('\n').map(function(l){return l.trim();})
-    .filter(function(l){return l.length>40&&!/^(inserito|visto|commenti per|Vangelo:|TESTO|VIDEO|AUDIO)/i.test(l)});
+    .replace(/&#(\d+);/g,function(_,n){return String.fromCharCode(parseInt(n,10));})
+    .split('\n').map(function(l){return l.trim();})
+    .filter(function(l){return l.length>40&&!/^(inserito|visto|commenti per|Vangelo:|TESTO|VIDEO|AUDIO)/i.test(l);});
   if(lines.length<2)return null;
   ctxt=lines.join('\n');
   return{commentTitle:ct||'Commento Ambrosiano',commentAuthor:ca||'Qumran2',commentText:ctxt};
@@ -380,18 +384,18 @@ async function fetchTRLPComment(){
   var d=new Date();
   var url='https://www.tiraccontolaparola.it/rito-ambrosiano-commento-al-vangelo-del-'+d.getDate()+'-'+IT_MONTHS_AMB[d.getMonth()]+'-'+d.getFullYear()+'/';
   try{
-    var html=await fetch(PROXY+encodeURIComponent(url)).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.text();});
-    if(html.includes('Pagina non trovata')||html.length<1000)return null;
+    var h=await proxyFetch(url);
+    if(h.includes('Pagina non trovata')||h.length<1000)return null;
     var ct='',ca='';
-    var titleM=html.match(/<strong[^>]*>"([^"<]{10,200})"<\/strong>/i)||html.match(/<strong[^>]*>«([^»<]{10,200})»<\/strong>/i);
+    var titleM=h.match(/<strong[^>]*>"([^"<]{10,200})"<\/strong>/i)||h.match(/<strong[^>]*>\u00ab([^\u00bb<]{10,200})\u00bb<\/strong>/i);
     if(titleM)ct=titleM[1].trim();
-    var authorM=html.match(/<em>([A-Z][a-zàèéìòù]+ [A-Z][a-zàèéìòù]+)<\/em>/);
+    var authorM=h.match(/<em>([A-Z][a-z\u00e0\u00e8\u00e9\u00ec\u00f2\u00f9]+ [A-Z][a-z\u00e0\u00e8\u00e9\u00ec\u00f2\u00f9]+)<\/em>/);
     if(authorM)ca=authorM[1].trim();
-    var startIdx=titleM?html.indexOf(titleM[0]):-1;
-    if(startIdx<0){var ol=html.lastIndexOf('</ol>');startIdx=ol>0?ol:html.indexOf('<p>');}
-    var endIdx=html.length;
-    ['Iscriviti alla Newsletter','Cookie Policy','Privacy Policy'].forEach(function(m){var i=html.indexOf(m,startIdx);if(i>0&&i<endIdx)endIdx=i;});
-    var lines=html.slice(startIdx,endIdx)
+    var startIdx=titleM?h.indexOf(titleM[0]):-1;
+    if(startIdx<0){var ol=h.lastIndexOf('</ol>');startIdx=ol>0?ol:h.indexOf('<p>');}
+    var endIdx=h.length;
+    ['Iscriviti alla Newsletter','Cookie Policy','Privacy Policy'].forEach(function(m){var i=h.indexOf(m,startIdx);if(i>0&&i<endIdx)endIdx=i;});
+    var lines=h.slice(startIdx,endIdx)
       .replace(/<br\s*\/?>/gi,'\n').replace(/<\/p>/gi,'\n').replace(/<[^>]+>/g,' ')
       .replace(/&amp;/g,'&').replace(/&nbsp;/g,' ')
       .replace(/&#(\d+);/g,function(_,n){return String.fromCharCode(parseInt(n,10));})
@@ -407,55 +411,78 @@ async function fetchAmbCommentRealtime(){
   try{var r2=await fetchTRLPComment();if(r2&&r2.commentText.length>100)return r2;}catch(e){}
   return null;
 }
+
+/* ── Carica il vangelo ── */
 async function loadGospel(rite){
   showLoading();
   try{
-    /* 1) Try pre-fetched JSON first (always preferred) */
-    var data,ok=false;
-    try{data=await fromFile(rite);ok=true;}catch(e){}
+    var data, ok=false;
+    /* 1) JSON pre-scaricato */
+    try{ data=await fromFile(rite); ok=true; }catch(e){}
+
     if(!ok){
       if(rite==='ambrosiano'){
-        /* 2a) Real-time Ambrosian gospel source */
-        try{data=await fromAmbAPIRealtime();}catch(e){
-          /* 2b) Last resort: Romano text */
-          data=await fromAPI();data.reference+=' (rito romano)';
+        /* 2a) Sorgente real-time ambrosiana */
+        try{ data=await fromAmbAPIRealtime(); ok=true; }catch(e){}
+        /* 2b) Se anche quella fallisce, mostra il Romano come fallback */
+        if(!ok){
+          try{
+            data=await fromFile('romano');
+            data=JSON.parse(JSON.stringify(data));
+            data.reference+=' (rito romano \u2014 ambrosiano non disponibile)';
+            ok=true;
+          }catch(e2){}
+        }
+        /* 2c) Ultimo fallback: API romano */
+        if(!ok){
+          data=await fromAPI();
+          data.reference+=' (rito romano)';
         }
       } else {
         data=await fromAPI();
       }
     }
-    /* 3) If ambrosiano comment is missing, try fetching it real-time */
+
+    /* 3) Commento ambrosiano real-time se mancante */
     if(rite==='ambrosiano'&&(!data.commentText||data.commentText.length<30)){
       try{
         var c=await fetchAmbCommentRealtime();
         if(c){data.commentTitle=c.commentTitle;data.commentAuthor=c.commentAuthor;data.commentText=c.commentText;}
       }catch(e){}
     }
+
     showContent(data,rite);
-  }catch(err){showError(rite);}
+  }catch(err){ showError(rite); }
 }
-document.querySelectorAll('.rite-tab').forEach(function(btn){btn.addEventListener('click',function(){var rite=btn.dataset.rite;if(rite===currentRite)return;currentRite=rite;document.querySelectorAll('.rite-tab').forEach(function(b){b.classList.toggle('active',b.dataset.rite===rite);b.setAttribute('aria-pressed',b.dataset.rite===rite?'true':'false');});loadGospel(rite);});});
+
+document.querySelectorAll('.rite-tab').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    var rite=btn.dataset.rite;
+    if(rite===currentRite)return;
+    currentRite=rite;
+    document.querySelectorAll('.rite-tab').forEach(function(b){
+      b.classList.toggle('active',b.dataset.rite===rite);
+      b.setAttribute('aria-pressed',b.dataset.rite===rite?'true':'false');
+    });
+    loadGospel(rite);
+  });
+});
 if(retryBtn)retryBtn.addEventListener('click',function(){loadGospel(currentRite);});
 document.addEventListener('DOMContentLoaded',function(){loadGospel(currentRite);});
 
 /* ── Prayers ── */
 var PRAYER_KEY='amdg_prayers_v3';
 function getPrayers(){
-  /* 1) Logged in + cloud loaded → use cloud */
   if(currentUser && window._cloudPrayers) return JSON.parse(JSON.stringify(window._cloudPrayers));
-  /* 2) Fallback: localStorage (works offline and before cloud loads) */
   try { var stored=localStorage.getItem(PRAYER_KEY); if(stored){var p=JSON.parse(stored);if(Array.isArray(p)&&p.length)return p;} } catch(e){}
-  /* 3) Absolute fallback: built-in defaults */
   return JSON.parse(JSON.stringify(DEFAULT_PRAYERS));
 }
-/* BUG FIX: always save to localStorage, not only when logged in */
 function savePrayersLocal(a){ try{localStorage.setItem(PRAYER_KEY,JSON.stringify(a));}catch(e){} }
 async function loadPrayersFromCloud(){
   if(!SUPA||!currentUser)return;
   try{
     var r=await SUPA.from('settings').select('prayers').eq('user_id',currentUser.id).single();
     if(r.error){
-      /* PGRST116 = nessuna riga trovata: normale per nuovi utenti, non è un errore */
       if(r.error.code!=='PGRST116') console.error('AMDG: loadPrayers error:', r.error);
       return;
     }
@@ -496,12 +523,8 @@ function renderPrayers(){
     list.appendChild(item);
     var toggle=item.querySelector('.prayer-toggle'),body=item.querySelector('.prayer-body');
     toggle.addEventListener('click',function(){var isOpen=toggle.getAttribute('aria-expanded')==='true';list.querySelectorAll('.prayer-item').forEach(function(i){if(i!==item){i.classList.remove('open');var t=i.querySelector('.prayer-toggle'),b=i.querySelector('.prayer-body');if(t)t.setAttribute('aria-expanded','false');if(b)b.classList.add('hidden');}});toggle.setAttribute('aria-expanded',isOpen?'false':'true');body.classList.toggle('hidden',isOpen);item.classList.toggle('open',!isOpen);});
-    if(loggedIn){
-      var editEl=item.querySelector('.prayer-edit-btn');
-      if(editEl)editEl.addEventListener('click',function(){openPE(idx);});
-    }
+    if(loggedIn){var editEl=item.querySelector('.prayer-edit-btn');if(editEl)editEl.addEventListener('click',function(){openPE(idx);});}
   });
-  /* Show/hide add & reset buttons based on login */
   var addBtn=document.getElementById('add-prayer-btn'),resetBtn=document.getElementById('reset-prayers-btn');
   if(addBtn)addBtn.style.display=loggedIn?'':'none';
   if(resetBtn)resetBtn.style.display=loggedIn?'':'none';
@@ -530,17 +553,14 @@ var resetPBtn=document.getElementById('reset-prayers-btn');
 if(resetPBtn)resetPBtn.addEventListener('click',function(){if(!currentUser){openAuth();return;}if(!confirm('Ripristinare le preghiere predefinite?'))return;var def=JSON.parse(JSON.stringify(DEFAULT_PRAYERS));savePrayersLocal(def);savePrayersToCloud(def);renderPrayers();});
 document.addEventListener('DOMContentLoaded',renderPrayers);
 
-/* ── Intentions (cloud only, visible only when logged in) ── */
+/* ── Intentions ── */
 async function loadIntentionsFromCloud(){
   if(!SUPA||!currentUser)return;
   try{
     var r=await SUPA.from('intentions').select('*').eq('user_id',currentUser.id).order('created_at',{ascending:false});
     if(r.error){console.error('AMDG: loadIntentions error:', r.error);throw r.error;}
     window._cloudIntentions=r.data||[];
-  }catch(e){
-    console.error('AMDG: loadIntentions exception:', e);
-    window._cloudIntentions=[];
-  }
+  }catch(e){ console.error('AMDG: loadIntentions exception:', e); window._cloudIntentions=[]; }
 }
 function getInts(){return window._cloudIntentions||[];}
 
@@ -556,35 +576,17 @@ function renderIntentions(){
     div.innerHTML='<div class="int-dot"></div><div class="int-body"><p class="int-text">'+item.text.replace(/</g,'&lt;')+'</p><p class="int-date">'+fmtDate(item.created_at)+(doneLabel?' <span class="int-esaudita">'+doneLabel+'</span>':'')+'</p></div><div class="int-actions"><button class="int-btn int-done-btn" data-id="'+item.id+'" title="'+(item.done?'Riapri':'Segna come esaudita')+'">'+(item.done?'\u21b7':'\u2713')+'</button><button class="int-btn int-del-btn" data-id="'+item.id+'" title="Elimina">\u00d7</button></div>';
     list.appendChild(div);
   });
-
   list.querySelectorAll('.int-done-btn').forEach(function(btn){
     btn.addEventListener('click',async function(){
-      var id=btn.dataset.id;
-      var arr=getInts();
-      var foundIdx=arr.findIndex(function(i){return i.id===id;});
-      if(foundIdx>=0){
-        var newDone=!arr[foundIdx].done;
-        arr[foundIdx].done=newDone;
-        window._cloudIntentions=arr;
-        if(SUPA&&currentUser){
-          var r=await SUPA.from('intentions').update({done:newDone}).eq('id',id).eq('user_id',currentUser.id);
-          if(r.error)console.error('toggle done error:',r.error);
-        }
-        renderIntentions();
-      }
+      var id=btn.dataset.id,arr=getInts(),foundIdx=arr.findIndex(function(i){return i.id===id;});
+      if(foundIdx>=0){var newDone=!arr[foundIdx].done;arr[foundIdx].done=newDone;window._cloudIntentions=arr;if(SUPA&&currentUser){var r=await SUPA.from('intentions').update({done:newDone}).eq('id',id).eq('user_id',currentUser.id);if(r.error)console.error('toggle done error:',r.error);}renderIntentions();}
     });
   });
-
   list.querySelectorAll('.int-del-btn').forEach(function(btn){
     btn.addEventListener('click',async function(){
       if(!confirm('Eliminare questa intenzione?'))return;
-      var id=btn.dataset.id;
-      window._cloudIntentions=getInts().filter(function(i){return i.id!==id;});
-      renderIntentions();
-      if(SUPA&&currentUser){
-        var r=await SUPA.from('intentions').delete().eq('id',id).eq('user_id',currentUser.id);
-        if(r.error)console.error('delete intention error:',r.error);
-      }
+      var id=btn.dataset.id;window._cloudIntentions=getInts().filter(function(i){return i.id!==id;});renderIntentions();
+      if(SUPA&&currentUser){var r=await SUPA.from('intentions').delete().eq('id',id).eq('user_id',currentUser.id);if(r.error)console.error('delete intention error:',r.error);}
     });
   });
 }
@@ -599,28 +601,21 @@ if(intAddBtn)intAddBtn.addEventListener('click',async function(){
   if(!currentUser){openAuth();return;}
   var text=(intInput?intInput.value:'').trim();
   if(!text)return;
-  if(!SUPA){showIntError('Sincronizzazione non disponibile. Configura Supabase in config.js.');return;}
-  hideIntError();
-  intAddBtn.disabled=true;
-  intAddBtn.textContent='…';
+  if(!SUPA){showIntError('Sincronizzazione non disponibile.');return;}
+  hideIntError();intAddBtn.disabled=true;intAddBtn.textContent='\u2026';
   try{
     var r=await SUPA.from('intentions').insert({user_id:currentUser.id,text:text.slice(0,500),done:false}).select().single();
     if(r.error)throw r.error;
     window._cloudIntentions=[r.data].concat(getInts());
     if(intInput){intInput.value='';if(intChars)intChars.textContent='0';}
     renderIntentions();
-  }catch(e){
-    console.error('intentions insert error:',e);
-    showIntError('Errore nel salvataggio: '+(e.message||'riprova.'));
-  }
-  intAddBtn.disabled=false;
-  intAddBtn.textContent='Aggiungi';
+  }catch(e){ console.error('intentions insert error:',e); showIntError('Errore nel salvataggio: '+(e.message||'riprova.')); }
+  intAddBtn.disabled=false;intAddBtn.textContent='Aggiungi';
 });
 if(intInput)intInput.addEventListener('keydown',function(e){if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)&&intAddBtn)intAddBtn.click();});
 document.addEventListener('DOMContentLoaded',function(){if(currentUser)renderIntentions();});
 
-/* ── Notes Preview (on main page) ── */
-
+/* ── Notes Preview ── */
 async function loadNotesPreview(){
   if(!SUPA||!currentUser)return;
   try{
@@ -628,16 +623,11 @@ async function loadNotesPreview(){
     window._cloudNotes=r.data||[];
   }catch(e){window._cloudNotes=[];}
 }
-
 function renderNotesPreview(){
-  var section=document.getElementById('notes-preview-section');
-  var list=document.getElementById('note-preview-list');
+  var section=document.getElementById('notes-preview-section'),list=document.getElementById('note-preview-list');
   if(!section||!list)return;
   var notes=window._cloudNotes||[];
-  if(!notes.length){
-    list.innerHTML='<p class="note-preview-empty">Nessun appunto ancora. Inizia a scrivere nella pagina Appunti.</p>';
-    return;
-  }
+  if(!notes.length){list.innerHTML='<p class="note-preview-empty">Nessun appunto ancora. Inizia a scrivere nella pagina Appunti.</p>';return;}
   list.innerHTML='';
   notes.forEach(function(note){
     var preview=(note.content||'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim().slice(0,120);
@@ -645,18 +635,12 @@ function renderNotesPreview(){
     var card=document.createElement('div');card.className='note-preview-card';
     card.innerHTML='<div class="note-preview-header"><span class="note-preview-title">'+(note.title||'Senza titolo').replace(/</g,'&lt;')+'</span><span class="note-preview-date">'+dateStr+'</span></div><div class="note-preview-body hidden"><p class="note-preview-text">'+(preview||'\u2014').replace(/</g,'&lt;')+'</p></div><button class="note-preview-toggle" aria-expanded="false"><span class="note-preview-toggle-icon"></span></button>';
     list.appendChild(card);
-    var toggleBtn=card.querySelector('.note-preview-toggle');
-    var body=card.querySelector('.note-preview-body');
-    toggleBtn.addEventListener('click',function(){
-      var open=toggleBtn.getAttribute('aria-expanded')==='true';
-      toggleBtn.setAttribute('aria-expanded',open?'false':'true');
-      body.classList.toggle('hidden',open);
-      card.classList.toggle('expanded',!open);
-    });
+    var toggleBtn=card.querySelector('.note-preview-toggle'),body=card.querySelector('.note-preview-body');
+    toggleBtn.addEventListener('click',function(){var open=toggleBtn.getAttribute('aria-expanded')==='true';toggleBtn.setAttribute('aria-expanded',open?'false':'true');body.classList.toggle('hidden',open);card.classList.toggle('expanded',!open);});
   });
 }
 
-/* ── Streak (cloud only when logged in) ── */
+/* ── Streak ── */
 var STREAK_KEY='amdg_streak_v2';
 function getVisits(){
   if(currentUser) try{return JSON.parse(localStorage.getItem(STREAK_KEY+'_'+currentUser.id)||'[]');}catch(e){return[];}
@@ -702,7 +686,6 @@ function renderStreak(){
   var sc=bar.querySelector('#ss');if(sc)setTimeout(function(){sc.scrollLeft=sc.scrollWidth;},50);
 }
 
-/* Render on load */
 document.addEventListener('DOMContentLoaded',function(){
   renderPrayers();
   updateAuthUI();
