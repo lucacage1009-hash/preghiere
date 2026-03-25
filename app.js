@@ -274,58 +274,139 @@ var APOSTOLE_AMB='https://www.apostolesacrocuore.org/vangelo-oggi-ambrosiano.php
 async function evaFetch(p){var qs=Object.keys(p).map(function(k){return encodeURIComponent(k)+'='+encodeURIComponent(p[k]);}).join('&');var r=await fetch(PROXY+encodeURIComponent(EVA+'?'+qs));if(!r.ok)throw new Error('HTTP '+r.status);return(await r.text()).trim();}
 async function fromAPI(){var d=todayFmt(),l='IT';var res=await Promise.all([evaFetch({date:d,lang:l,type:'reading_lt',content:'GSP'}),evaFetch({date:d,lang:l,type:'reading',content:'GSP'}),evaFetch({date:d,lang:l,type:'comment_t'}),evaFetch({date:d,lang:l,type:'comment_a'}),evaFetch({date:d,lang:l,type:'comment'})]);if(!res[1]||res[1].length<20)throw new Error('empty');return{reference:res[0],text:res[1],commentTitle:res[2],commentAuthor:res[3],commentText:res[4]};}
 
-/* Real-time Ambrosian fallback via apostolesacrocuore.org */
+/* Real-time Ambrosian gospel: apostolesacrocuore.org
+   The page contains the FULL liturgy of the word (prayers, readings, psalms, preface…).
+   We isolate ONLY the "Lettura del Vangelo" section. */
 async function fromAmbAPIRealtime(){
   var iso=todayISO();
   var url=APOSTOLE_AMB+'?data='+iso;
-  var html=await fetch(PROXY+encodeURIComponent(url)).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.text();});
-  /* Extract reference */
-  var ref='';
-  var refM=html.match(/Dal\s+Vangelo\s+secondo\s+[^\n<*]{4,80}/i)||html.match(/Dal\s+Vangelo\s+di\s+Ges[^\n<*]{4,80}/i);
-  if(refM)ref=cleanText(refM[0]).slice(0,140);
-  /* Find text block */
-  var gspStart=html.indexOf('**Dal Vangelo');
-  if(gspStart<0)gspStart=html.search(/Dal\s+Vangelo\s+(secondo|di)/i);
-  if(gspStart<0)throw new Error('no gospel block');
-  var afterRef=html.indexOf('\n',gspStart+5);
-  var endPos=html.length;
-  ['**Salmo','Condividi','facebook.com','twitter.com','Il Vangelo Rito Ambrosiano'].forEach(function(m){var i=html.indexOf(m,afterRef);if(i>0&&i<endPos)endPos=i;});
-  var lines=html.slice(afterRef,endPos).split('\n')
-    .map(function(l){return l.replace(/\*\*/g,'').trim();})
-    .filter(function(l){return l.length>30&&!/^(ascolti|lettura|salmo|condividi)/i.test(l);})
-    .slice(0,35);
-  if(lines.length<2)throw new Error('too short');
+  var raw=await fetch(PROXY+encodeURIComponent(url)).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.text();});
+
+  /* Strip HTML tags → plain text */
+  var text=raw
+    .replace(/<br\s*\/?>/gi,'\n')
+    .replace(/<\/p>/gi,'\n')
+    .replace(/<\/li>/gi,'\n')
+    .replace(/<[^>]+>/g,' ')
+    .replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&nbsp;/g,' ')
+    .replace(/&#(\d+);/g,function(_,n){return String.fromCharCode(parseInt(n,10));})
+    .split('\n').map(function(l){return l.trim();}).filter(function(l){return l.length>0;}).join('\n');
+
+  /* ── Find "Lettura del Vangelo" line (the LAST occurrence — it's the gospel section) ── */
+  var gspRegex=/Lettura del Vangelo secondo\s+\S+/i;
+  var gspIdx=-1;
+  var match;
+  var searchFrom=0;
+  /* Walk forward finding all occurrences, keep the last */
+  while(true){
+    var sub=text.slice(searchFrom);
+    var m=sub.match(gspRegex);
+    if(!m)break;
+    gspIdx=searchFrom+sub.indexOf(m[0]);
+    searchFrom=gspIdx+m[0].length;
+  }
+  if(gspIdx<0) throw new Error('gospel section not found');
+
+  /* Build reference: "Lettura del Vangelo secondo Marco\nMc 8, 27-33" */
+  var refLineEnd=text.indexOf('\n',gspIdx);
+  var refLine=text.slice(gspIdx,refLineEnd>0?refLineEnd:gspIdx+100).trim();
+  /* Next line is typically the citation (e.g. "Mc 8, 27-33") */
+  var nextLineStart=refLineEnd+1;
+  var nextLineEnd=text.indexOf('\n',nextLineStart);
+  var citation=text.slice(nextLineStart,nextLineEnd>0?nextLineEnd:nextLineStart+30).trim();
+  var ref=(refLine+(citation&&/^[A-Z][a-z]/.test(citation)?'\n'+citation:'')).replace(/Lettura del /i,'Dal ');
+
+  /* Gospel body: from "In quel tempo" (or first line after citation) to end markers */
+  var bodyStart=text.indexOf('In quel tempo',gspIdx);
+  if(bodyStart<0) bodyStart=nextLineEnd+1;
+
+  var endMarkers=['https://','http://','Il Signore si ricordò','A CONCLUSIONE','DOPO IL VANGELO',
+                  'O Dio forte','Gradisci, o Padre','Porgi ascolto','SUI DONI','PREFAZIO',
+                  'Ascolta, Signore, la voce','Condividi','Il Vangelo Rito Ambrosiano'];
+  var bodyEnd=text.length;
+  endMarkers.forEach(function(m){
+    var i=text.indexOf(m,bodyStart);
+    if(i>0&&i<bodyEnd)bodyEnd=i;
+  });
+
+  var lines=text.slice(bodyStart,bodyEnd)
+    .split('\n')
+    .map(function(l){return l.trim();})
+    .filter(function(l){return l.length>20;})
+    .slice(0,40);
+
+  if(lines.length<2) throw new Error('gospel body too short');
   return{reference:ref||'Vangelo — Rito Ambrosiano',text:lines.join('\n'),commentTitle:'',commentAuthor:'',commentText:''};
 }
 
-/* Real-time Ambrosian comment via tiraccontolaparola.it */
+/* Real-time Ambrosian comment — primary: qumran2.net, fallback: tiraccontolaparola.it */
 var IT_MONTHS_AMB=['gennaio','febbraio','marzo','aprile','maggio','giugno','luglio','agosto','settembre','ottobre','novembre','dicembre'];
-async function fetchAmbCommentRealtime(){
+
+async function fetchQumranComment(){
+  /* qumran2 shows the first ambrosian comment for today directly via ?rito=ambrosiano&data=YYYY-MM-DD */
+  var url='https://www.qumran2.net/parolenuove/commenti.php?rito=ambrosiano&criteri=1&data='+todayISO()+'&tipo=testo';
+  var raw=await fetch(PROXY+encodeURIComponent(url)).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.text();});
+  if(raw.length<500||raw.includes('Nessun commento'))return null;
+
+  /* Title: first <a> inside a TESTO block */
+  var ct='',ca='',ctxt='';
+  var titleM=raw.match(/TESTO\d+\.\s*<[^>]+>\s*\*?\*?([^\[<\n]{10,200}?)\*?\*?\s*<\/a>/i);
+  if(!titleM)titleM=raw.match(/class="tit_com"[^>]*>\s*([^<]{10,200})\s*</i);
+  if(!titleM)titleM=raw.match(/\[([^\]]{10,120})\]\(https?:\/\/www\.qumran/);
+  if(titleM)ct=titleM[1].replace(/\*/g,'').trim();
+
+  /* Author */
+  var authorM=raw.match(/\[([^\]]{4,60})\]\(https?:\/\/www\.qumran2\.net\/parolenuove\/commenti\.php\?criteri=1&autore=/);
+  if(authorM)ca=authorM[1].replace(/\*/g,'').trim();
+
+  /* Body: strip HTML, take first substantial block between title and next TESTO/footer */
+  var bodyStart=titleM?raw.indexOf(titleM[0]):raw.indexOf('<p>');
+  var bodyEnd=raw.length;
+  var nextTESTO=raw.indexOf('TESTO',bodyStart+titleM[0].length+1);
+  if(nextTESTO>0)bodyEnd=nextTESTO;
+  ['Iscriviti','Cookie Policy','Qumran2.net, dal'].forEach(function(m){var i=raw.indexOf(m,bodyStart);if(i>0&&i<bodyEnd)bodyEnd=i;});
+
+  var slice=raw.slice(bodyStart,bodyEnd)
+    .replace(/<br\s*\/?>/gi,'\n').replace(/<\/p>/gi,'\n').replace(/<[^>]+>/g,' ')
+    .replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&nbsp;/g,' ')
+    .replace(/&#(\d+);/g,function(_,n){return String.fromCharCode(parseInt(n,10));});
+  var lines=slice.split('\n').map(function(l){return l.trim();})
+    .filter(function(l){return l.length>40&&!/^(inserito|visto|commenti per|Vangelo:|TESTO|VIDEO|AUDIO)/i.test(l)});
+  if(lines.length<2)return null;
+  ctxt=lines.join('\n');
+  return{commentTitle:ct||'Commento Ambrosiano',commentAuthor:ca||'Qumran2',commentText:ctxt};
+}
+
+async function fetchTRLPComment(){
   var d=new Date();
   var url='https://www.tiraccontolaparola.it/rito-ambrosiano-commento-al-vangelo-del-'+d.getDate()+'-'+IT_MONTHS_AMB[d.getMonth()]+'-'+d.getFullYear()+'/';
   try{
     var html=await fetch(PROXY+encodeURIComponent(url)).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.text();});
     if(html.includes('Pagina non trovata')||html.length<1000)return null;
-    /* Extract comment title */
-    var ct='',ca='',ctxt='';
+    var ct='',ca='';
     var titleM=html.match(/<strong[^>]*>"([^"<]{10,200})"<\/strong>/i)||html.match(/<strong[^>]*>«([^»<]{10,200})»<\/strong>/i);
     if(titleM)ct=titleM[1].trim();
     var authorM=html.match(/<em>([A-Z][a-zàèéìòù]+ [A-Z][a-zàèéìòù]+)<\/em>/);
     if(authorM)ca=authorM[1].trim();
-    /* Extract body: from strong title to newsletter */
     var startIdx=titleM?html.indexOf(titleM[0]):-1;
     if(startIdx<0){var ol=html.lastIndexOf('</ol>');startIdx=ol>0?ol:html.indexOf('<p>');}
     var endIdx=html.length;
     ['Iscriviti alla Newsletter','Cookie Policy','Privacy Policy'].forEach(function(m){var i=html.indexOf(m,startIdx);if(i>0&&i<endIdx)endIdx=i;});
-    var slice=html.slice(startIdx,endIdx);
-    var lines=slice.replace(/<[^>]+>/g,' ').replace(/&[a-z#0-9]+;/gi,' ')
-      .split(/\n|\.(?=\s+[A-Z])/)
-      .map(function(l){return l.trim();})
-      .filter(function(l){return l.length>30&&!/^(iscriviti|cookie|privacy|nome|cognome|email|invia|accetto|copyright)/i.test(l)});
+    var lines=html.slice(startIdx,endIdx)
+      .replace(/<br\s*\/?>/gi,'\n').replace(/<\/p>/gi,'\n').replace(/<[^>]+>/g,' ')
+      .replace(/&amp;/g,'&').replace(/&nbsp;/g,' ')
+      .replace(/&#(\d+);/g,function(_,n){return String.fromCharCode(parseInt(n,10));})
+      .split('\n').map(function(l){return l.trim();})
+      .filter(function(l){return l.length>40&&!/^(iscriviti|cookie|privacy|nome|cognome|email|invia|accetto|copyright)/i.test(l);});
     if(lines.length<3)return null;
-    ctxt=lines.join('\n');
-    return{commentTitle:ct||'Commento al Vangelo Ambrosiano',commentAuthor:ca||'Ti racconto la Parola',commentText:ctxt};
+    return{commentTitle:ct||'Commento al Vangelo',commentAuthor:ca||'Ti racconto la Parola',commentText:lines.join('\n')};
   }catch(e){return null;}
+}
+
+async function fetchAmbCommentRealtime(){
+  try{var r=await fetchQumranComment();if(r&&r.commentText.length>100)return r;}catch(e){}
+  try{var r2=await fetchTRLPComment();if(r2&&r2.commentText.length>100)return r2;}catch(e){}
+  return null;
 }
 async function loadGospel(rite){
   showLoading();
