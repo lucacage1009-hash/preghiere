@@ -3,7 +3,7 @@
 /*
   fetch-gospels.js — scarica vangeli romano + ambrosiano
   Romano: Evangelizo API (affidabile, ufficiale)
-  Ambrosiano: apostolesacrocuore.org come fonte principale
+  Ambrosiano: prova 4 sorgenti diverse, seleziona la prima che funziona
 
   Uso: node fetch-gospels.js [giorni]   default=30
 */
@@ -87,127 +87,99 @@ async function fetchRomano(ds){
   return {reference:ref,text,commentTitle:ct,commentAuthor:ca,commentText:cb};
 }
 
-/* ── Extract gospel from apostolesacrocuore.org HTML ── */
-function extractApostole(html){
+/* ── Extract gospel text from HTML ── */
+function extractGospel(html){
   if(!html||html.length<200) return null;
 
-  /* Converti tutto l'HTML in testo pulito PRIMA di cercare il vangelo */
-  const text = html
-    .replace(/<br\s*\/?>/gi,'\n').replace(/<\/p>\s*/gi,'\n')
-    .replace(/<\/li>\s*/gi,'\n').replace(/<\/h[1-6]>\s*/gi,'\n')
-    .replace(/<\/div>\s*/gi,'\n').replace(/<[^>]+>/g,'')
-    .replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>')
-    .replace(/&nbsp;/g,' ').replace(/&apos;/g,"'").replace(/&quot;/g,'"')
-    .replace(/&#(\d+);/g,(_,n)=>String.fromCharCode(n))
-    .replace(/&#x([0-9a-f]+);/gi,(_,h)=>String.fromCharCode(parseInt(h,16)))
-    .replace(/\*\*/g,'');
+  /* Find reference */
+  let ref='';
+  const refPatterns=[
+    /Dal\s+Vangelo\s+di\s+Ges[^\n<"]{5,100}/i,
+    /Dal\s+Vangelo\s+secondo\s+[^\n<"]{5,80}/i,
+    /Vangelo\s+secondo\s+[^\n<"]{5,80}/i,
+  ];
+  for(const p of refPatterns){const m=html.match(p);if(m){ref=clean(m[0]).slice(0,140);break;}}
 
-  const lines = text.split('\n').map(l=>l.trim()).filter(l=>l.length>0);
+  /* Try content containers in order */
+  const containers=[
+    /<div[^>]+class="[^"]*entry-content[^"]*"[^>]*>([\s\S]{200,12000}?)<\/div>/i,
+    /<div[^>]+class="[^"]*td-post-content[^"]*"[^>]*>([\s\S]{200,12000}?)<\/div>/i,
+    /<div[^>]+class="[^"]*post-content[^"]*"[^>]*>([\s\S]{200,12000}?)<\/div>/i,
+    /<div[^>]+class="[^"]*single[^"]*[^"]*"[^>]*>([\s\S]{200,12000}?)<\/div>/i,
+    /<div[^>]+class="[^"]*content[^"]*"[^>]*>([\s\S]{300,15000}?)<\/div>/i,
+    /<article[^>]*>([\s\S]{300,20000}?)<\/article>/i,
+    /<main[^>]*>([\s\S]{300,20000}?)<\/main>/i,
+  ];
 
-  /* Trova l'ULTIMA occorrenza di "Lettura del Vangelo" / "Dal Vangelo" */
-  let gspLineIdx = -1;
-  for(let i=lines.length-1;i>=0;i--){
-    if(/^(Lettura del Vangelo|Dal Vangelo di Ges|Dal Vangelo secondo)/i.test(lines[i])){
-      gspLineIdx=i; break;
+  const skipLine = /^(menu|nav|abbonati|newsletter|seguici|contatti|cerca|home|categoria|tag|share|commenta|login|registr|cookie|privacy|facebook|twitter|instagram|youtube|\d{1,2}\/\d{1,2}|\d{4}$)/i;
+
+  for(const re of containers){
+    const m=html.match(re);
+    if(!m) continue;
+    const lines=clean(m[1]).split('\n')
+      .filter(l=>l.length>30&&!skipLine.test(l.trim()))
+      .slice(0,40);
+    if(lines.length>=3&&lines.join(' ').length>200){
+      return {reference:ref||'Vangelo — Rito Ambrosiano',text:lines.join('\n')};
     }
   }
-  if(gspLineIdx<0) return null;
-
-  /* Riferimento */
-  const ref = lines[gspLineIdx].replace(/^Lettura del /i,'Dal ');
-
-  /* Corpo: cerca l'inizio del testo evangelico e raccoglie fino ai marcatori di fine */
-  const STARTERS = /^(In quel tempo|Nel sesto mese|Il Signore Ges|Il Signore disse|Ges\u00f9 disse|In quel giorno|Allora Ges\u00f9)/i;
-  const ENDERS   = /^(https?:\/\/|Il Signore si ricord|A CONCLUSIONE|DOPO IL VANGELO|Ascolta, Signore|O Dio forte|Gradisci|SUI DONI|PREFAZIO|\u00c8 veramente cosa|Santo)/i;
-
-  const bodyLines = [];
-  let inBody = false;
-  for(let j=gspLineIdx+1;j<lines.length;j++){
-    const l = lines[j];
-    if(!inBody && STARTERS.test(l)){ inBody=true; }
-    if(!inBody) continue;
-    if(ENDERS.test(l)) break;
-    if(l.length>10) bodyLines.push(l);
-    if(bodyLines.length>=50) break;
-  }
-
-  if(bodyLines.length<2) return null;
-  return{reference:ref, text:bodyLines.join('\n')};
-}
-
-/* ── Ambrosiano source 1 (PRIMARY): apostolesacrocuore.org ── */
-async function tryApostole(d){
-  const iso=isoDate(d);
-  try{
-    const html=await httpGet(`https://www.apostolesacrocuore.org/vangelo-oggi-ambrosiano.php?data=${iso}`);
-    const result=extractApostole(html);
-    if(result&&result.text.length>100){
-      console.log(`    [amb OK] apostolesacrocuore`);
-      return result;
-    }
-  }catch(e){ console.error('  apostole err:',e.message); }
   return null;
 }
 
-/* ── Ambrosiano source 2 (FALLBACK): vangelodelgiorno.org ── */
+/* ── Ambrosiano: ONLY date-specific URLs to avoid saving the wrong day's gospel ──
+   Generic "today's page" URLs (laparola.it, diocesimilano.it homepage) are EXCLUDED
+   because when the Action runs on Monday and fetches next week's dates, those pages
+   return Monday's gospel — which then gets stored for the wrong date.
+   If no date-specific source works, we return null and the site falls back to Romano.
+── */
+
+/* Source 1: vangelodelgiorno.org — has per-date archive URLs */
 async function tryVdg(d){
   const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');
+  const url=`https://vangelodelgiorno.org/ambrosiano/${y}/${m}/${dd}/`;
   try{
-    const html=await httpGet(`https://vangelodelgiorno.org/ambrosiano/${y}/${m}/${dd}/`);
-    if(html&&html.length>500){
-      /* Usa la stessa logica di extractApostole */
-      const result=extractApostole(html);
-      if(result&&result.text.length>100){
-        console.log(`    [amb OK] vangelodelgiorno`);
-        return result;
-      }
-    }
+    const html=await httpGet(url);
+    const result=extractGospel(html);
+    if(result&&result.text.length>100) return result;
   }catch(e){}
   return null;
 }
 
-async function fetchAmbrosiano(d){
-  return await tryApostole(d) || await tryVdg(d) || null;
-}
-
-/* ── tiraccontolaparola.it — Ambrosian comment ── */
-const IT_MONTHS = ['gennaio','febbraio','marzo','aprile','maggio','giugno','luglio','agosto','settembre','ottobre','novembre','dicembre'];
-
-function extractTRLPComment(html){
-  if(!html||html.length<500) return null;
-  let commentTitle='',commentAuthor='';
-  const titleM = html.match(/<strong[^>]*>"([^"<]{10,200})"<\/strong>/i)
-               || html.match(/<strong[^>]*>\u00ab([^\u00bb<]{10,200})\u00bb<\/strong>/i);
-  if(titleM) commentTitle = titleM[1].trim();
-  const authorM = html.match(/<em>([A-Z][a-z\u00e0\u00e8\u00e9\u00ec\u00f2\u00f9]+ [A-Z][a-z\u00e0\u00e8\u00e9\u00ec\u00f2\u00f9]+)<\/em>/);
-  if(authorM) commentAuthor = authorM[1].trim();
-  let startIdx = titleM ? html.indexOf(titleM[0]) : -1;
-  if(startIdx < 0){const olEnd = html.lastIndexOf('</ol>');startIdx = olEnd > 0 ? olEnd : html.indexOf('<p>');}
-  let endIdx = html.length;
-  ['Iscriviti alla Newsletter','Cookie Policy','Privacy Policy','class="wp-block-group"'].forEach(m=>{const i=html.indexOf(m,startIdx);if(i>0&&i<endIdx)endIdx=i;});
-  const lines = html.slice(startIdx,endIdx)
-    .replace(/<br\s*\/?>/gi,'\n').replace(/<\/p>/gi,'\n').replace(/<[^>]+>/g,' ')
-    .replace(/&amp;/g,'&').replace(/&nbsp;/g,' ')
-    .replace(/&#(\d+);/g,(_,n)=>String.fromCharCode(n))
-    .split('\n').map(l=>l.trim())
-    .filter(l=>l.length>30 && !/^(iscriviti|cookie|privacy|nome|cognome|email|telefono|invia|accetto|copyright)/i.test(l));
-  if(!lines.length) return null;
-  return{commentTitle:commentTitle||'Commento al Vangelo',commentAuthor:commentAuthor||'Ti racconto la Parola',commentText:lines.join('\n')};
-}
-
-async function fetchAmbComment(d){
-  const day=d.getDate(), month=IT_MONTHS[d.getMonth()], year=d.getFullYear();
-  const url=`https://www.tiraccontolaparola.it/rito-ambrosiano-commento-al-vangelo-del-${day}-${month}-${year}/`;
+/* Source 2: missaleambrosianum.it — has per-date archive URLs */
+async function tryMissale(d){
   try{
-    const html=await httpGet(url);
-    if(html.includes('Pagina non trovata')||html.includes('404')||html.length<1000) return null;
-    const result=extractTRLPComment(html);
-    if(result&&result.commentText.length>100){
-      console.log(`    [comment OK] tiraccontolaparola.it`);
-      return result;
-    }
-  }catch(e){ console.error('  TRLP comment err:',e.message); }
+    const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');
+    const html=await httpGet(`https://www.missaleambrosianum.it/liturgia/${y}/${m}/${dd}`);
+    const result=extractGospel(html);
+    if(result&&result.text.length>100) return result;
+  }catch(e){}
   return null;
+}
+
+/* Source 3: chiesadimilano.it — try date-specific URL patterns */
+async function tryChiesaMI(d){
+  const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');
+  const urls=[
+    `https://www.chiesadimilano.it/letture-rito-ambrosiano/${y}/${m}/${dd}/`,
+    `https://www.chiesadimilano.it/letture-rito-ambrosiano/${y}-${m}-${dd}/`,
+    `https://www.diocesimilano.it/chiesa-e-comunita/liturgia/rito-ambrosiano/${y}/${m}/${dd}/`,
+  ];
+  for(const url of urls){
+    try{
+      const html=await httpGet(url);
+      const result=extractGospel(html);
+      if(result&&result.text.length>100) return result;
+    }catch(e){}
+    await sleep(150);
+  }
+  return null;
+}
+
+async function fetchAmbrosiano(d){
+  /* Only date-specific sources — never "today's homepage" */
+  return await tryVdg(d)
+      || await tryMissale(d)
+      || await tryChiesaMI(d);
 }
 
 /* ── Main ── */
@@ -225,13 +197,7 @@ async function main(){
     const d=dates[i], iso=isoDate(d), ds=evaDate(d);
     const ex=gospels[iso];
     const romanOk=ex?.romano?.text?.length>20;
-    /* Valida il dato ambrosiano: scarta se contiene la liturgia intera */
-    const ambValid = ex?.ambrosiano?.text &&
-      ex.ambrosiano.text.length > 20 &&
-      ex.ambrosiano.text.length < 3000 &&
-      !ex.ambrosiano.reference?.includes('rito romano') &&
-      !/PREFAZIO|SUI DONI|A CONCLUSIONE|perdona le nostre colpe|salvaci\./i.test(ex.ambrosiano.text);
-    const ambOk = ambValid;
+    const ambOk=ex?.ambrosiano?.text?.length>20&&!ex.ambrosiano.reference?.includes('rito romano');
 
     if(romanOk&&ambOk){sk++;process.stdout.write(`\r  [${i+1}/${dates.length}] skip ${iso}`);continue;}
 
@@ -251,25 +217,12 @@ async function main(){
         await sleep(DELAY/2);
       }
 
-      /* Commento ambrosiano */
-      const ambHasComment=amb&&amb.commentText&&amb.commentText.length>50;
-      let ambComment={commentTitle:romano.commentTitle,commentAuthor:romano.commentAuthor,commentText:romano.commentText};
-      if(!ambHasComment){
-        try{
-          const trlp=await fetchAmbComment(d);
-          if(trlp) ambComment={commentTitle:trlp.commentTitle,commentAuthor:trlp.commentAuthor,commentText:trlp.commentText};
-        }catch(e){}
-        await sleep(DELAY/2);
-      } else {
-        ambComment={commentTitle:amb.commentTitle,commentAuthor:amb.commentAuthor,commentText:amb.commentText};
-      }
-
       gospels[iso]={
         romano,
         ambrosiano:amb
-          ?{...amb,commentTitle:ambComment.commentTitle,commentAuthor:ambComment.commentAuthor,commentText:ambComment.commentText}
+          ?{...amb,commentTitle:romano.commentTitle,commentAuthor:romano.commentAuthor,commentText:romano.commentText}
           :{reference:romano.reference+' (rito romano)',text:romano.text,
-            commentTitle:ambComment.commentTitle,commentAuthor:ambComment.commentAuthor,commentText:ambComment.commentText},
+            commentTitle:romano.commentTitle,commentAuthor:romano.commentAuthor,commentText:romano.commentText},
       };
       dl++;
       if(dl%5===0) fs.writeFileSync(OUTPUT,JSON.stringify(gospels,null,2),'utf8');
