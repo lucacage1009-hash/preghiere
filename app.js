@@ -264,13 +264,53 @@ async function fromFile(rite){
   var data=entry[rite];if(!data||!data.text)throw new Error('no text');return data;
 }
 var PROXY='https://api.allorigins.win/raw?url=',EVA='https://feed.evangelizo.org/v2/reader.php';
+var APOSTOLE_AMB='https://www.apostolesacrocuore.org/vangelo-oggi-ambrosiano.php';
 async function evaFetch(p){var qs=Object.keys(p).map(function(k){return encodeURIComponent(k)+'='+encodeURIComponent(p[k]);}).join('&');var r=await fetch(PROXY+encodeURIComponent(EVA+'?'+qs));if(!r.ok)throw new Error('HTTP '+r.status);return(await r.text()).trim();}
 async function fromAPI(){var d=todayFmt(),l='IT';var res=await Promise.all([evaFetch({date:d,lang:l,type:'reading_lt',content:'GSP'}),evaFetch({date:d,lang:l,type:'reading',content:'GSP'}),evaFetch({date:d,lang:l,type:'comment_t'}),evaFetch({date:d,lang:l,type:'comment_a'}),evaFetch({date:d,lang:l,type:'comment'})]);if(!res[1]||res[1].length<20)throw new Error('empty');return{reference:res[0],text:res[1],commentTitle:res[2],commentAuthor:res[3],commentText:res[4]};}
+
+/* Real-time Ambrosian fallback via apostolesacrocuore.org */
+async function fromAmbAPIRealtime(){
+  var iso=todayISO();
+  var url=APOSTOLE_AMB+'?data='+iso;
+  var html=await fetch(PROXY+encodeURIComponent(url)).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.text();});
+  /* Extract reference */
+  var ref='';
+  var refM=html.match(/Dal\s+Vangelo\s+secondo\s+[^\n<*]{4,80}/i)||html.match(/Dal\s+Vangelo\s+di\s+Ges[^\n<*]{4,80}/i);
+  if(refM)ref=cleanText(refM[0]).slice(0,140);
+  /* Find text block */
+  var gspStart=html.indexOf('**Dal Vangelo');
+  if(gspStart<0)gspStart=html.search(/Dal\s+Vangelo\s+(secondo|di)/i);
+  if(gspStart<0)throw new Error('no gospel block');
+  var afterRef=html.indexOf('\n',gspStart+5);
+  var endPos=html.length;
+  ['**Salmo','Condividi','facebook.com','twitter.com','Il Vangelo Rito Ambrosiano'].forEach(function(m){var i=html.indexOf(m,afterRef);if(i>0&&i<endPos)endPos=i;});
+  var lines=html.slice(afterRef,endPos).split('\n')
+    .map(function(l){return l.replace(/\*\*/g,'').trim();})
+    .filter(function(l){return l.length>30&&!/^(ascolti|lettura|salmo|condividi)/i.test(l);})
+    .slice(0,35);
+  if(lines.length<2)throw new Error('too short');
+  return{reference:ref||'Vangelo — Rito Ambrosiano',text:lines.join('\n'),commentTitle:'',commentAuthor:'',commentText:''};
+}
 async function loadGospel(rite){
   showLoading();
-  try{var data,ok=false;try{data=await fromFile(rite);ok=true;}catch(e){}
-  if(!ok){data=await fromAPI();if(rite==='ambrosiano')data.reference+=' (rito romano)';}
-  showContent(data,rite);}catch(err){showError(rite);}
+  try{
+    /* 1) Try pre-fetched JSON first (always preferred) */
+    var data,ok=false;
+    try{data=await fromFile(rite);ok=true;}catch(e){}
+    if(!ok){
+      if(rite==='ambrosiano'){
+        /* 2a) Real-time Ambrosian source */
+        try{data=await fromAmbAPIRealtime();}catch(e){
+          /* 2b) Last resort: Romano text labelled as ambrosiano */
+          data=await fromAPI();data.reference+=' (rito romano)';
+        }
+      } else {
+        /* Romano real-time */
+        data=await fromAPI();
+      }
+    }
+    showContent(data,rite);
+  }catch(err){showError(rite);}
 }
 document.querySelectorAll('.rite-tab').forEach(function(btn){btn.addEventListener('click',function(){var rite=btn.dataset.rite;if(rite===currentRite)return;currentRite=rite;document.querySelectorAll('.rite-tab').forEach(function(b){b.classList.toggle('active',b.dataset.rite===rite);b.setAttribute('aria-pressed',b.dataset.rite===rite?'true':'false');});loadGospel(rite);});});
 if(retryBtn)retryBtn.addEventListener('click',function(){loadGospel(currentRite);});
