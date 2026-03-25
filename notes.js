@@ -22,7 +22,13 @@ function initSupabase(){
     return;
   }
   try {
-    SUPA=supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    SUPA=supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        storageKey: 'amdg_sb_auth'
+      }
+    });
   } catch(e) {
     console.error('AMDG: errore createClient Supabase (chiave non valida?):', e);
     return;
