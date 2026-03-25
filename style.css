@@ -413,3 +413,14 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .btn-icon-sm:hover{background:var(--gold-glow);}
 .btn-ghost-sm{border-color:var(--br);color:var(--t3);}
 .btn-ghost-sm:hover{border-color:var(--br);color:var(--t2);background:var(--s2);}
+
+/* ── Welcome modal ── */
+.welcome-modal{max-width:520px;padding:2.5rem;}
+.welcome-title{margin-bottom:1.5rem;}
+.welcome-body{display:flex;flex-direction:column;gap:0.9rem;margin-bottom:2rem;}
+.welcome-body p{font-family:var(--font-d);font-size:0.97rem;font-weight:300;line-height:1.8;color:var(--t2);}
+
+/* ── Intentions header row ── */
+.int-header-row{display:flex;align-items:flex-start;justify-content:space-between;gap:0.5rem;padding-bottom:0.5rem;}
+.int-chiedi{flex:1;font-family:var(--font-d);font-size:1rem;font-weight:300;font-style:italic;color:var(--gold-dim);letter-spacing:0.02em;padding:0.6rem 0 0.5rem;line-height:1.6;}
+.int-chiedi-ref{display:block;font-size:0.68rem;font-weight:600;font-style:normal;letter-spacing:0.14em;text-transform:uppercase;color:var(--t3);margin-top:0.3rem;}
