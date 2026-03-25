@@ -126,6 +126,68 @@ function extractGospel(html){
   return null;
 }
 
+/* ── tiraccontolaparola.it — Ambrosian comment extractor ── */
+const IT_MONTHS = ['gennaio','febbraio','marzo','aprile','maggio','giugno','luglio','agosto','settembre','ottobre','novembre','dicembre'];
+
+function extractTRLPComment(html){
+  if(!html||html.length<500) return null;
+
+  /* ── Comment title: first <strong> after the gospel list ── */
+  let commentTitle='';
+  const titleM = html.match(/<strong[^>]*>"([^"<]{10,200})"<\/strong>/i)
+               || html.match(/<strong[^>]*>«([^»<]{10,200})»<\/strong>/i);
+  if(titleM) commentTitle = titleM[1].trim();
+
+  /* ── Author: text inside <em> near a date / bottom of post ── */
+  let commentAuthor='';
+  const authorM = html.match(/<em>([A-Z][a-zàèéìòù]+ [A-Z][a-zàèéìòù]+)<\/em>/);
+  if(authorM) commentAuthor = authorM[1].trim();
+
+  /* ── Comment body: paragraphs between strong title and author ── */
+  /* Find the position of the comment title in HTML */
+  let startIdx = -1;
+  if(titleM) startIdx = html.indexOf(titleM[0]);
+  if(startIdx < 0){
+    /* Fallback: find first <p> after the ordered list */
+    const olEnd = html.lastIndexOf('</ol>');
+    startIdx = olEnd > 0 ? olEnd : html.indexOf('<p>');
+  }
+  /* Find end: newsletter form or cookie links */
+  const endMarkers = ['Iscriviti alla Newsletter','Cookie Policy','Privacy Policy','class="wp-block-group"'];
+  let endIdx = html.length;
+  for(const m of endMarkers){const i=html.indexOf(m,startIdx);if(i>0&&i<endIdx)endIdx=i;}
+
+  const slice = html.slice(startIdx, endIdx);
+  const lines = clean(slice)
+    .split('\n')
+    .map(l=>l.trim())
+    .filter(l=>l.length>30 && !/^(iscriviti|cookie|privacy|nome|cognome|email|telefono|invia|accetto|copyright)/i.test(l));
+
+  if(!lines.length) return null;
+
+  return {
+    commentTitle: commentTitle || 'Commento al Vangelo',
+    commentAuthor: commentAuthor || 'Ti racconto la Parola',
+    commentText: lines.join('\n')
+  };
+}
+
+async function fetchAmbComment(d){
+  const day=d.getDate(), month=IT_MONTHS[d.getMonth()], year=d.getFullYear();
+  const url=`https://www.tiraccontolaparola.it/rito-ambrosiano-commento-al-vangelo-del-${day}-${month}-${year}/`;
+  try{
+    const html=await httpGet(url);
+    /* 404 or redirect to homepage → html will lack the comment */
+    if(html.includes('Pagina non trovata')||html.includes('404')||html.length<1000) return null;
+    const result=extractTRLPComment(html);
+    if(result&&result.commentText.length>100){
+      console.log(`    [comment OK] tiraccontolaparola.it`);
+      return result;
+    }
+  }catch(e){ console.error('  TRLP comment err:',e.message); }
+  return null;
+}
+
 /* ── Extract gospel from apostolesacrocuore.org HTML ── */
 function extractApostole(html){
   if(!html||html.length<200) return null;
@@ -250,12 +312,25 @@ async function main(){
         await sleep(DELAY/2);
       }
 
+      /* ── Ambrosian comment: try tiraccontolaparola.it ── */
+      const ambHasComment=amb&&amb.commentText&&amb.commentText.length>50&&!amb.commentText.includes('rito romano');
+      let ambComment={commentTitle:romano.commentTitle,commentAuthor:romano.commentAuthor,commentText:romano.commentText};
+      if(!ambHasComment){
+        try{
+          const trlp=await fetchAmbComment(d);
+          if(trlp) ambComment={commentTitle:trlp.commentTitle,commentAuthor:trlp.commentAuthor,commentText:trlp.commentText};
+        }catch(e){}
+        await sleep(DELAY/2);
+      } else {
+        ambComment={commentTitle:amb.commentTitle,commentAuthor:amb.commentAuthor,commentText:amb.commentText};
+      }
+
       gospels[iso]={
         romano,
         ambrosiano:amb
-          ?{...amb,commentTitle:romano.commentTitle,commentAuthor:romano.commentAuthor,commentText:romano.commentText}
+          ?{...amb,commentTitle:ambComment.commentTitle,commentAuthor:ambComment.commentAuthor,commentText:ambComment.commentText}
           :{reference:romano.reference+' (rito romano)',text:romano.text,
-            commentTitle:romano.commentTitle,commentAuthor:romano.commentAuthor,commentText:romano.commentText},
+            commentTitle:ambComment.commentTitle,commentAuthor:ambComment.commentAuthor,commentText:ambComment.commentText},
       };
       dl++;
       if(dl%5===0) fs.writeFileSync(OUTPUT,JSON.stringify(gospels,null,2),'utf8');
