@@ -12,6 +12,22 @@
 </head>
 <body>
  
+<!-- Welcome Overlay (first visit) -->
+<div id="welcome-overlay" class="auth-overlay hidden">
+  <div class="auth-modal welcome-modal">
+    <div class="auth-logo">&#10013;</div>
+    <h2 class="auth-title welcome-title">Ad Maiorem Dei Gloriam</h2>
+    <div class="welcome-body">
+      <p>Questo spazio nasce per aiutarti a non rimanere fermo, ma a crescere nella fede giorno dopo giorno. Le grandi cose si costruiscono attraverso piccoli passi costanti.</p>
+      <p>Qui puoi creare e custodire le tue preghiere, oppure utilizzare quelle già disponibili, per dare forma a una routine quotidiana di lettura e meditazione della Parola.</p>
+      <p>Sono presenti anche spunti di riflessione tratti da testi di Don Giussani e la possibilità di prendere appunti personali, per accompagnare il tuo cammino in modo semplice e concreto.</p>
+      <p>Gesù non propone solo un insegnamento, ma una via concreta di vita. Incontrarlo significa lasciarsi orientare da Lui, anche quando questo richiede di mettere in discussione abitudini e certezze già consolidate. È un cammino che coinvolge tutta la persona, passo dopo passo.</p>
+      <p>Per questo questo spazio vuole aiutarti a custodire ciò che chiedi, a tornare su ciò che scrivi e a riconoscere nel tempo come Dio opera nella tua vita.</p>
+    </div>
+    <button class="btn-primary btn-full" id="welcome-proceed">Voglio iniziare questo cammino</button>
+  </div>
+</div>
+
 <!-- Auth Modal -->
 <div id="auth-overlay" class="auth-overlay hidden">
   <div class="auth-modal">
@@ -151,6 +167,13 @@
   <section class="block personal-section" id="intentions-section">
     <div class="block-eyebrow">Le Mie Intenzioni</div>
     <div class="card intentions-card">
+      <div class="int-header-row">
+        <p class="int-chiedi">&#171;Chiedete e vi sarà dato; cercate e troverete; bussate e vi sarà aperto.&#187;<span class="int-chiedi-ref">Matteo 7,7</span></p>
+        <div class="int-info-wrap">
+          <button class="int-info-btn" aria-label="Informazioni" tabindex="0">&#9432;</button>
+          <div class="int-info-tooltip" role="tooltip">Il Signore conosce ciò di cui hai bisogno prima ancora che tu lo chieda. Affidati con grande fede a Lui e scopri le meraviglie che può compiere nella tua vita.<br/><br/>Questo spazio serve per ricordarti di ciò che chiedi e per riconoscere sempre l&#8217;azione di Dio nella tua vita.</div>
+        </div>
+      </div>
       <div class="intentions-compose">
         <textarea id="int-input" class="int-textarea" maxlength="500" rows="3"
           placeholder="Scrivi un&#8217;intenzione di preghiera&#8230;"></textarea>
