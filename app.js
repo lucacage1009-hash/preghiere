@@ -267,7 +267,15 @@ function showError(rite){
 async function fromFile(rite){
   if(!gospelsCache){var r=await fetch('./gospels.json?v='+todayISO());if(!r.ok)throw new Error('no file');gospelsCache=await r.json();}
   var entry=gospelsCache[todayISO()];if(!entry)throw new Error('no date');
-  var data=entry[rite];if(!data||!data.text)throw new Error('no text');return data;
+  var data=entry[rite];if(!data||!data.text)throw new Error('no text');
+  /* Ambrosiano validation: reject if it's just a roman fallback or if the text
+     is suspiciously long (captured whole liturgy) or looks like non-gospel content */
+  if(rite==='ambrosiano'){
+    if(data.reference&&data.reference.includes('rito romano'))throw new Error('ambrosiano fallback, use realtime');
+    if(data.text.length>4000)throw new Error('ambrosiano text too long, likely full liturgy');
+    if(/PREFAZIO|SUI DONI|A CONCLUSIONE|perdona le nostre colpe|ALLA FINE|salvaci\./i.test(data.text))throw new Error('ambrosiano contains liturgy, use realtime');
+  }
+  return data;
 }
 var PROXY='https://api.allorigins.win/raw?url=',EVA='https://feed.evangelizo.org/v2/reader.php';
 var APOSTOLE_AMB='https://www.apostolesacrocuore.org/vangelo-oggi-ambrosiano.php';
@@ -275,68 +283,59 @@ async function evaFetch(p){var qs=Object.keys(p).map(function(k){return encodeUR
 async function fromAPI(){var d=todayFmt(),l='IT';var res=await Promise.all([evaFetch({date:d,lang:l,type:'reading_lt',content:'GSP'}),evaFetch({date:d,lang:l,type:'reading',content:'GSP'}),evaFetch({date:d,lang:l,type:'comment_t'}),evaFetch({date:d,lang:l,type:'comment_a'}),evaFetch({date:d,lang:l,type:'comment'})]);if(!res[1]||res[1].length<20)throw new Error('empty');return{reference:res[0],text:res[1],commentTitle:res[2],commentAuthor:res[3],commentText:res[4]};}
 
 /* Real-time Ambrosian gospel: apostolesacrocuore.org
-   The page contains the FULL liturgy of the word (prayers, readings, psalms, preface…).
-   We isolate ONLY the "Lettura del Vangelo" section. */
+   Page contains the FULL Ambrosian Liturgy of the Word.
+   We isolate ONLY the gospel section working line by line. */
 async function fromAmbAPIRealtime(){
   var iso=todayISO();
   var url=APOSTOLE_AMB+'?data='+iso;
-  var raw=await fetch(PROXY+encodeURIComponent(url)).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.text();});
-
-  /* Strip HTML tags → plain text */
-  var text=raw
-    .replace(/<br\s*\/?>/gi,'\n')
-    .replace(/<\/p>/gi,'\n')
-    .replace(/<\/li>/gi,'\n')
-    .replace(/<[^>]+>/g,' ')
-    .replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&nbsp;/g,' ')
-    .replace(/&#(\d+);/g,function(_,n){return String.fromCharCode(parseInt(n,10));})
-    .split('\n').map(function(l){return l.trim();}).filter(function(l){return l.length>0;}).join('\n');
-
-  /* ── Find "Lettura del Vangelo" line (the LAST occurrence — it's the gospel section) ── */
-  var gspRegex=/Lettura del Vangelo secondo\s+\S+/i;
-  var gspIdx=-1;
-  var match;
-  var searchFrom=0;
-  /* Walk forward finding all occurrences, keep the last */
-  while(true){
-    var sub=text.slice(searchFrom);
-    var m=sub.match(gspRegex);
-    if(!m)break;
-    gspIdx=searchFrom+sub.indexOf(m[0]);
-    searchFrom=gspIdx+m[0].length;
-  }
-  if(gspIdx<0) throw new Error('gospel section not found');
-
-  /* Build reference: "Lettura del Vangelo secondo Marco\nMc 8, 27-33" */
-  var refLineEnd=text.indexOf('\n',gspIdx);
-  var refLine=text.slice(gspIdx,refLineEnd>0?refLineEnd:gspIdx+100).trim();
-  /* Next line is typically the citation (e.g. "Mc 8, 27-33") */
-  var nextLineStart=refLineEnd+1;
-  var nextLineEnd=text.indexOf('\n',nextLineStart);
-  var citation=text.slice(nextLineStart,nextLineEnd>0?nextLineEnd:nextLineStart+30).trim();
-  var ref=(refLine+(citation&&/^[A-Z][a-z]/.test(citation)?'\n'+citation:'')).replace(/Lettura del /i,'Dal ');
-
-  /* Gospel body: from "In quel tempo" (or first line after citation) to end markers */
-  var bodyStart=text.indexOf('In quel tempo',gspIdx);
-  if(bodyStart<0) bodyStart=nextLineEnd+1;
-
-  var endMarkers=['https://','http://','Il Signore si ricordò','A CONCLUSIONE','DOPO IL VANGELO',
-                  'O Dio forte','Gradisci, o Padre','Porgi ascolto','SUI DONI','PREFAZIO',
-                  'Ascolta, Signore, la voce','Condividi','Il Vangelo Rito Ambrosiano'];
-  var bodyEnd=text.length;
-  endMarkers.forEach(function(m){
-    var i=text.indexOf(m,bodyStart);
-    if(i>0&&i<bodyEnd)bodyEnd=i;
+  var raw=await fetch(PROXY+encodeURIComponent(url)).then(function(r){
+    if(!r.ok)throw new Error('HTTP '+r.status);return r.text();
   });
 
-  var lines=text.slice(bodyStart,bodyEnd)
-    .split('\n')
-    .map(function(l){return l.trim();})
-    .filter(function(l){return l.length>20;})
-    .slice(0,40);
+  /* Convert HTML to clean lines */
+  var text=raw
+    .replace(/<br\s*\/?>/gi,'\n').replace(/<\/p>\s*/gi,'\n').replace(/<\/li>\s*/gi,'\n')
+    .replace(/<\/h[1-6]>\s*/gi,'\n').replace(/<[^>]+>/g,'')
+    .replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>')
+    .replace(/&nbsp;/g,' ').replace(/&apos;/g,"'").replace(/&quot;/g,'"')
+    .replace(/&#(\d+);/g,function(_,n){return String.fromCharCode(parseInt(n,10));})
+    .replace(/&#x([0-9a-f]+);/gi,function(_,h){return String.fromCharCode(parseInt(h,16));});
 
-  if(lines.length<2) throw new Error('gospel body too short');
-  return{reference:ref||'Vangelo — Rito Ambrosiano',text:lines.join('\n'),commentTitle:'',commentAuthor:'',commentText:''};
+  var lines=text.split('\n').map(function(l){return l.trim();}).filter(function(l){return l.length>0;});
+
+  /* Find the LAST "Lettura del Vangelo" / "Dal Vangelo" line */
+  var gspLineIdx=-1;
+  for(var i=lines.length-1;i>=0;i--){
+    if(/^(Lettura del Vangelo|Dal Vangelo di Ges|Dal Vangelo secondo)/i.test(lines[i])){
+      gspLineIdx=i; break;
+    }
+  }
+  if(gspLineIdx<0)throw new Error('gospel header not found');
+
+  /* Reference: header line + optional citation on next line */
+  var refLine=lines[gspLineIdx].replace(/^Lettura del /i,'Dal ');
+  var nextLine=lines[gspLineIdx+1]||'';
+  var ref=refLine+(/^[A-Z][a-z]{0,2}\s+\d/.test(nextLine)?'\n'+nextLine:'');
+
+  /* Body: scan forward from gspLineIdx, collect gospel text lines */
+  var bodyLines=[];
+  var inBody=false;
+  for(var j=gspLineIdx+1;j<lines.length;j++){
+    var l=lines[j];
+    /* Start collecting at "In quel tempo" or "Il Signore Gesù" */
+    if(!inBody&&(/^In quel tempo/i.test(l)||/^Il Signore Gesù/i.test(l)||/^Il Signore disse/i.test(l))){
+      inBody=true;
+    }
+    if(!inBody) continue;
+    /* Stop at audio URL, post-gospel prayers, or next liturgical section */
+    if(/^https?:\/\//i.test(l))break;
+    if(/^(Il Signore si ricordò|A CONCLUSIONE|DOPO IL VANGELO|Ascolta, Signore|O Dio forte|Gradisci|SUI DONI|PREFAZIO|È veramente cosa buona|Porgi ascolto|Santo\u2026|Amen\s*$)/i.test(l))break;
+    if(l.length>10) bodyLines.push(l);
+    if(bodyLines.length>=45)break;
+  }
+
+  if(bodyLines.length<2)throw new Error('gospel body too short ('+bodyLines.length+' lines)');
+  return{reference:ref,text:bodyLines.join('\n'),commentTitle:'',commentAuthor:'',commentText:''};
 }
 
 /* Real-time Ambrosian comment — primary: qumran2.net, fallback: tiraccontolaparola.it */
