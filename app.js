@@ -236,43 +236,44 @@ function fillEl(el,text){
   el.innerHTML='';
   cleanText(text).split('\n').filter(function(p){return p.trim();}).forEach(function(t){var p=document.createElement('p');p.textContent=t;el.appendChild(p);});
 }
-/* Extract only the gospel reading from ambrosiano text (remove prayers, psalms, prefaces etc.) */
+/* Extract only the gospel pericope from ambrosiano text */
 function extractGospelOnly(raw){
   var cleaned=cleanText(raw||'');
   var lines=cleaned.split('\n');
-  /* Find lines that mark the start of the gospel reading */
-  var gospelStartPatterns=[
-    /Lettura del Vangelo/i,
-    /Dal Vangelo/i,
-    /Vangelo secondo/i,
-  ];
-  var gospelEndPatterns=[
-    /^https?:\/\//i,
-    /^Ascolta/i,
-    /^A CONCLUSIONE/i,
-    /^Gradisci/i,
-    /^\u00c8 veramente cosa buona/i,
-    /^Ascolta, Signore/i,
-    /^Il Signore si ricord/i,
-    /^Signore, non disperdere/i,
-  ];
+  /* Strategy: find "In quel tempo" or "Lettura del Vangelo" as the definitive gospel start.
+     "Vangelo secondo X" alone is too broad (it appears as a title at the top too). */
   var start=-1, end=-1;
   for(var i=0;i<lines.length;i++){
+    var l=lines[i];
     if(start===-1){
-      for(var p=0;p<gospelStartPatterns.length;p++){
-        if(gospelStartPatterns[p].test(lines[i])){start=i;break;}
+      /* Look for the precise start markers */
+      if(/In quel tempo/i.test(l) ||
+         /^Lettura del Vangelo/i.test(l) ||
+         /^Dal Vangelo/i.test(l)){
+        start=i;
       }
     } else {
-      for(var q=0;q<gospelEndPatterns.length;q++){
-        if(gospelEndPatterns[q].test(lines[i])){end=i;break;}
+      /* Stop at audio URLs, section headers, or liturgical prayers that follow the gospel */
+      if(/^https?:\/\//i.test(l) ||
+         /^A CONCLUSIONE/i.test(l) ||
+         /^Gradisci/i.test(l) ||
+         /^È veramente cosa buona/i.test(l) ||
+         /^Ascolta, Signore/i.test(l) ||
+         /^Il Signore si ricord/i.test(l) ||
+         /^Signore, non disperdere/i.test(l) ||
+         /^Parola del Signore/i.test(l)){
+        end=i; break;
       }
-      if(end!==-1) break;
     }
   }
-  if(start===-1) return cleaned; /* fallback: return everything */
-  var gospelLines=lines.slice(start, end===-1?undefined:end);
-  /* Remove the "Lettura del Vangelo secondo X" header line — keep it as reference */
-  return gospelLines.join('\n');
+  if(start===-1){
+    /* Last resort: try to find "In quel tempo" more broadly */
+    for(var j=0;j<lines.length;j++){
+      if(/In quel tempo|in quel tempo/i.test(lines[j])){start=j;break;}
+    }
+  }
+  if(start===-1) return cleaned; /* nothing matched, return all */
+  return lines.slice(start, end===-1?undefined:end).join('\n');
 }
 
 var gLoad=document.getElementById('gospel-loading'),gContent=document.getElementById('gospel-content'),gError=document.getElementById('gospel-error');
