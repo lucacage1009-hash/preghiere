@@ -312,10 +312,13 @@ function showError(rite){
   if(errLinks){errLinks.innerHTML='';var links=rite==='romano'?[{t:'Vatican News',u:LINKS.romano}]:[{t:'La Parola Ambrosiano',u:LINKS.ambrosiano}];links.forEach(function(l){var a=document.createElement('a');a.href=l.u;a.textContent=l.t;a.target='_blank';a.rel='noopener noreferrer';errLinks.appendChild(a);});}
   if(gError)gError.classList.remove('hidden');
 }
+var POLLUTION_RE=/ALL'INIZIO DELL'ASSEMBLEA|A CONCLUSIONE DELLA LITURGIA|Gradisci, o Padre|veramente cosa buona e giusta|Ascolta, Signore, la voce|perdona le nostre colpe/i;
 async function fromFile(rite){
   if(!gospelsCache){var r=await fetch('./gospels.json?v='+todayISO());if(!r.ok)throw new Error('no file');gospelsCache=await r.json();}
   var entry=gospelsCache[todayISO()];if(!entry)throw new Error('no date');
-  var data=entry[rite];if(!data||!data.text)throw new Error('no text');return data;
+  var data=entry[rite];if(!data||!data.text)throw new Error('no text');
+  if(POLLUTION_RE.test(data.text))throw new Error('polluted'); /* bad homepage data — fall through to API */
+  return data;
 }
 var PROXY='https://api.allorigins.win/raw?url=',EVA='https://feed.evangelizo.org/v2/reader.php';
 async function evaFetch(p){var qs=Object.keys(p).map(function(k){return encodeURIComponent(k)+'='+encodeURIComponent(p[k]);}).join('&');var r=await fetch(PROXY+encodeURIComponent(EVA+'?'+qs));if(!r.ok)throw new Error('HTTP '+r.status);return(await r.text()).trim();}
