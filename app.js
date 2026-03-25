@@ -323,7 +323,7 @@ async function fromAPI(){var d=todayFmt(),l='IT';var res=await Promise.all([evaF
 async function loadGospel(rite){
   showLoading();
   try{var data,ok=false;try{data=await fromFile(rite);ok=true;}catch(e){}
-  if(!ok){data=await fromAPI();if(rite==='ambrosiano')data.reference+=' (rito romano)';}
+  if(!ok){data=await fromAPI();}
   showContent(data,rite);}catch(err){showError(rite);}
 }
 document.querySelectorAll('.rite-tab').forEach(function(btn){btn.addEventListener('click',function(){var rite=btn.dataset.rite;if(rite===currentRite)return;currentRite=rite;document.querySelectorAll('.rite-tab').forEach(function(b){b.classList.toggle('active',b.dataset.rite===rite);b.setAttribute('aria-pressed',b.dataset.rite===rite?'true':'false');});loadGospel(rite);});});
