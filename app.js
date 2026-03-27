@@ -318,20 +318,36 @@ function showContent(data,rite){
   if(gLink)gLink.href=LINKS[rite];
   /* Show comment for both rites; for ambrosiano label it as romano */
   if(cSection){
-    var ct=cleanText(data.commentText||'');
-    if(ct.length>30){
-      var commentLabel=rite==='romano'?'Commento al Vangelo':'Commento al Vangelo Romano';
-      if(cTitle)cTitle.textContent=cleanText(data.commentTitle)||commentLabel;
-      /* Show the rite label as a small note for ambrosiano */
-      var cTag=cSection.querySelector('.comment-tag');
-      if(cTag)cTag.textContent=commentLabel;
-      if(cAuth)cAuth.textContent=cleanText(data.commentAuthor)?'\u2014 '+cleanText(data.commentAuthor):'';
-      if(cText)fillEl(cText,data.commentText);
-      cSection.classList.remove('hidden');
-    } else {
-      cSection.classList.add('hidden');
+  var rawComment = data.commentText || '';
+
+  if(rawComment && rawComment.length > 50){
+
+    var commentLabel = rite==='romano'
+      ? 'Commento al Vangelo'
+      : 'Commento al Vangelo Romano';
+
+    if(cTitle){
+      cTitle.textContent = cleanText(data.commentTitle || '') || commentLabel;
     }
+
+    var cTag = cSection.querySelector('.comment-tag');
+    if(cTag) cTag.textContent = commentLabel;
+
+    if(cAuth){
+      var author = cleanText(data.commentAuthor || '');
+      cAuth.textContent = author ? '— ' + author : '';
+    }
+
+    if(cText){
+      fillEl(cText, rawComment); // ⚠️ NON usare ct
+    }
+
+    cSection.classList.remove('hidden');
+
+  } else {
+    cSection.classList.add('hidden');
   }
+}
   if(gContent)gContent.classList.remove('hidden');
 }
 function showError(rite){
