@@ -84,7 +84,26 @@ async function fetchRomano(ds){
     evaGet({...base,type:'comment_a'}),
     evaGet({...base,type:'comment'}),
   ]);
-  return {reference:ref,text,commentTitle:ct,commentAuthor:ca,commentText:cb};
+// Normalizzazione robusta commento
+let commentText = cb && cb.length > 50 ? cb : null;
+let commentTitle = ct && ct.length > 3 ? ct : null;
+let commentAuthor = ca && ca.length > 2 ? ca : null;
+
+// Se manca il titolo ma c'è testo → prova a estrarlo
+if (!commentTitle && commentText) {
+  const firstLine = commentText.split('\n')[0].trim();
+  if (firstLine.length > 5 && firstLine.length < 120) {
+    commentTitle = firstLine;
+  }
+}
+
+return {
+  reference: ref,
+  text,
+  commentTitle,
+  commentAuthor,
+  commentText
+};
 }
 
 /* ── Extract gospel text from HTML ── */
